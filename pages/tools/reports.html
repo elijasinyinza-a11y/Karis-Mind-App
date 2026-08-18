@@ -1,5 +1,154 @@
-<!-- reports — built in a future session -->
-<div style="padding: 8px 0">
-  <div class="page-title" style="margin-bottom:6px; text-transform:capitalize">reports</div>
-  <div class="page-subtitle">Coming in a future session.</div>
+<!--
+  ============================================================
+  REPORTS PAGE (global)
+  pages/tools/reports.html
+
+  All generated reports across every client.
+  Init: init_reports() — called by router.
+
+  Sections:
+  1. Page header    — title + generate button
+  2. Toolbar        — search + instrument filter
+  3. Reports table  — flattened from all clients' reports
+  ============================================================
+-->
+
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-title">Reports</div>
+    <div class="page-subtitle">All generated reports across your client engagements</div>
+  </div>
+  <button class="btn btn-secondary" onclick="showToast('Report generation happens from within a client record.')">
+    Generate report
+  </button>
 </div>
+
+<!-- Toolbar -->
+<div class="d-flex align-center gap-3 mb-5" style="flex-wrap: wrap">
+  <div class="search-wrap" style="flex: 1; min-width: 220px; max-width: 360px">
+    <svg class="search-icon" width="14" height="14" fill="none"
+         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input class="search-input" type="text" id="report-search"
+           placeholder="Search by report or client…"
+           oninput="_renderReports()" autocomplete="off">
+  </div>
+
+  <select class="form-select" id="report-filter" style="width:auto;min-width:150px"
+          onchange="_renderReports()">
+    <option value="all">All instruments</option>
+    <option value="ocam">OCAM™</option>
+    <option value="gold">GOLD™</option>
+    <option value="strategy">Strategy</option>
+  </select>
+
+  <div class="text-sm text-muted ml-auto" id="report-count"></div>
+</div>
+
+<!-- Reports table -->
+<div id="reports-container">
+  <!-- Rendered by init_reports() -->
+</div>
+
+
+<script>
+function init_reports() {
+  _renderReports();
+}
+
+/* Flatten all reports from all clients into one list */
+function _allReports() {
+  const out = [];
+  KarisState.clients.forEach(function(c) {
+    (c.reports || []).forEach(function(r) {
+      out.push({
+        date:       r.date,
+        label:      r.label,
+        instrument: r.instrument,
+        clientId:   c.id,
+        clientName: c.name
+      });
+    });
+  });
+  return out;
+}
+
+function _renderReports() {
+  const container = document.getElementById('reports-container');
+  const countEl   = document.getElementById('report-count');
+  if (!container) return;
+
+  const query  = (document.getElementById('report-search')?.value || '').toLowerCase().trim();
+  const filter = document.getElementById('report-filter')?.value || 'all';
+
+  let reports = _allReports();
+
+  /* Instrument filter (normalise gold-i → gold) */
+  if (filter !== 'all') {
+    reports = reports.filter(function(r) {
+      const instr = (r.instrument === 'gold-i') ? 'gold' : r.instrument;
+      return instr === filter;
+    });
+  }
+
+  /* Search */
+  if (query) {
+    reports = reports.filter(function(r) {
+      return r.label.toLowerCase().includes(query) ||
+             r.clientName.toLowerCase().includes(query);
+    });
+  }
+
+  /* Count */
+  if (countEl) {
+    countEl.textContent = reports.length + (reports.length === 1 ? ' report' : ' reports');
+  }
+
+  /* Empty state */
+  if (!reports.length) {
+    container.innerHTML = `
+      <div class="table-wrap">
+        <div class="empty-state">
+          <div class="empty-state-icon">▤</div>
+          <div class="empty-state-title">No reports found</div>
+          <div class="empty-state-sub">
+            Reports are generated from within a client record once an
+            instrument diagnostic is complete.
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  /* Rows */
+  const rows = reports.map(function(r) {
+    const badgeClass = r.instrument === 'ocam' ? 'badge-ocam'
+                     : (r.instrument === 'gold-i' || r.instrument === 'gold') ? 'badge-gold-i'
+                     : 'badge-strategy';
+    const badgeLabel = r.instrument === 'ocam' ? 'OCAM'
+                     : (r.instrument === 'gold-i' || r.instrument === 'gold') ? 'GOLD'
+                     : 'Strategy';
+
+    return `
+      <div class="table-row">
+        <div class="text-sm text-muted flex-shrink-0" style="min-width:90px">${r.date}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:var(--weight-medium)" class="truncate">${r.label}</div>
+          <div class="text-sm text-muted truncate"
+               style="cursor:pointer"
+               onclick="KarisRouter.goToClient('${r.clientId}')">
+            ${r.clientName}
+          </div>
+        </div>
+        <span class="badge ${badgeClass} flex-shrink-0">${badgeLabel}</span>
+        <button class="btn btn-ghost btn-sm flex-shrink-0"
+                onclick="showToast('Download available when backend is live.')">
+          ↓ Download
+        </button>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = '<div class="table-wrap">' + rows + '</div>';
+}
+</script>
