@@ -1,0 +1,349 @@
+<!--
+  ============================================================
+  DASHBOARD PAGE
+  pages/dashboard.html
+
+  Loaded dynamically into #content by KarisRouter.go('dashboard').
+  Init function: init_dashboard() — called automatically by router.
+
+  Sections:
+  1. Priority banner  — most recently active client + action
+  2. Content grid     — recent activity | active clients
+  3. Subdomain cards  — links to instrument public subdomains
+  ============================================================
+-->
+
+
+<!-- ── 1. PRIORITY BANNER ─────────────────────────────────────
+  Shows the most recently active client and what needs
+  attention. Gold left accent bar signals priority without
+  needing a dark background.
+  Populated by init_dashboard() from KarisState.
+──────────────────────────────────────────────────────────── -->
+<div class="priority-banner" id="dash-priority-banner">
+  <!-- Populated by init_dashboard() -->
+</div>
+
+
+<!-- ── 2. CONTENT GRID ────────────────────────────────────────
+  Two columns:
+  Left  — recent activity feed across all clients
+  Right — active clients quick-access list
+──────────────────────────────────────────────────────────── -->
+<div class="grid-2" style="margin-bottom: var(--space-6)">
+
+  <!-- Recent activity -->
+  <div class="card">
+    <div class="card-title">Recent activity</div>
+    <div class="activity-list" id="dash-activity-list">
+      <!-- Populated by init_dashboard() -->
+    </div>
+  </div>
+
+  <!-- Active clients -->
+  <div class="card">
+    <div class="d-flex align-center justify-between mb-4">
+      <div class="card-title" style="margin-bottom:0">Active clients</div>
+      <button class="btn btn-ghost btn-sm"
+              onclick="KarisRouter.go('clients')">
+        View all
+      </button>
+    </div>
+    <div id="dash-client-list">
+      <!-- Populated by init_dashboard() -->
+    </div>
+    <div class="mt-4">
+      <button class="btn btn-secondary btn-sm w-full"
+              onclick="KarisRouter.go('clients')">
+        All clients →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ── 3. SUBDOMAIN CARDS ─────────────────────────────────────
+  Links to the three public instrument subdomains.
+  These open in a new tab — they are external to the workspace.
+  Static — no dynamic population needed.
+──────────────────────────────────────────────────────────── -->
+<div class="card">
+
+  <div class="d-flex align-center justify-between mb-2">
+    <div class="card-title" style="margin-bottom:0">Instrument subdomains</div>
+    <span class="badge badge-muted">Public discovery</span>
+  </div>
+
+  <p class="text-sm text-muted mb-4" style="line-height: var(--leading-relaxed)">
+    Each instrument has a public-facing subdomain for standalone
+    runs and discovery. Practitioners can share these links with
+    clients directly. Results from subdomain sessions can be
+    linked back to a client record.
+  </p>
+
+  <div class="grid-3">
+
+    <!-- OCAM -->
+    <a class="subdomain-card ocam"
+       href="https://ocam.karismind.com"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Open OCAM™ public instrument">
+      <div class="subdomain-icon ocam">O</div>
+      <div class="subdomain-info">
+        <div class="subdomain-name">OCAM™</div>
+        <div class="subdomain-url">ocam.karismind.com</div>
+      </div>
+      <svg class="subdomain-arrow" width="14" height="14" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+           aria-hidden="true">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </a>
+
+    <!-- GOLD -->
+    <a class="subdomain-card gold-i"
+       href="https://gold.karismind.com"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Open GOLD™ public instrument">
+      <div class="subdomain-icon gold-i">G</div>
+      <div class="subdomain-info">
+        <div class="subdomain-name">GOLD™</div>
+        <div class="subdomain-url">gold.karismind.com</div>
+      </div>
+      <svg class="subdomain-arrow" width="14" height="14" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+           aria-hidden="true">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </a>
+
+    <!-- Strategy -->
+    <a class="subdomain-card strategy-card"
+       href="https://strategy.karismind.com"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Open Strategy public instrument">
+      <div class="subdomain-icon strategy">S</div>
+      <div class="subdomain-info">
+        <div class="subdomain-name">Strategy</div>
+        <div class="subdomain-url">strategy.karismind.com</div>
+      </div>
+      <svg class="subdomain-arrow" width="14" height="14" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+           aria-hidden="true">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </a>
+
+  </div>
+</div>
+
+
+<!-- ── PAGE SCRIPT ────────────────────────────────────────────
+  init_dashboard() is called automatically by KarisRouter
+  after this HTML is injected into #content.
+
+  It reads from KarisState and populates:
+  - Priority banner (most recent active client)
+  - Recent activity feed
+  - Active clients list
+──────────────────────────────────────────────────────────── -->
+<script>
+function init_dashboard() {
+
+  _renderPriorityBanner();
+  _renderActivityFeed();
+  _renderClientList();
+
+}
+
+/* ── Priority banner ── */
+function _renderPriorityBanner() {
+  const banner = document.getElementById('dash-priority-banner');
+  if (!banner) return;
+
+  /*
+    Find the most recently active client that has an
+    instrument in progress — that is the priority item.
+    Falls back to the first active client if none in progress.
+  */
+  const inProgress = KarisState.clients.find(function(c) {
+    return (
+      c.instruments.ocam.status     === 'in-progress' ||
+      c.instruments.gold.status     === 'in-progress' ||
+      c.instruments.strategy.status === 'in-progress'
+    );
+  });
+
+  const featured = inProgress || KarisState.getMostRecentClient();
+  if (!featured) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  /* Work out which instrument is in progress */
+  let instrLabel = '';
+  let instrSub   = '';
+
+  if (featured.instruments.ocam.status === 'in-progress') {
+    instrLabel = 'OCAM™ diagnostic in progress';
+    instrSub   = featured.instruments.ocam.progress || '';
+  } else if (featured.instruments.gold.status === 'in-progress') {
+    instrLabel = 'GOLD™ assessment in progress';
+  } else if (featured.instruments.strategy.status === 'in-progress') {
+    const stage = featured.instruments.strategy.stage || 0;
+    const names = ['','Conception','Consultation','Confirmation',
+                   'Composition','Communication','Coordination','Controlling'];
+    instrLabel = 'Strategy in progress';
+    instrSub   = 'Stage ' + stage + ' — ' + (names[stage] || '');
+  } else {
+    instrLabel = 'No instruments started';
+  }
+
+  banner.innerHTML = `
+    <div>
+      <div class="priority-eyebrow">Continue where you left off</div>
+      <div class="priority-title">${featured.name}
+        <span style="font-weight:var(--weight-regular);
+                     color:var(--color-muted);
+                     font-size:var(--text-base)">
+          — ${featured.fullName}
+        </span>
+      </div>
+      <div class="priority-sub">
+        ${instrLabel}${instrSub ? ' · ' + instrSub : ''}
+        · Last active ${featured.lastActivity}
+      </div>
+    </div>
+    <button class="btn btn-primary"
+            onclick="KarisRouter.goToClient('${featured.id}')">
+      Open record →
+    </button>
+  `;
+}
+
+/* ── Recent activity feed ── */
+function _renderActivityFeed() {
+  const list = document.getElementById('dash-activity-list');
+  if (!list) return;
+
+  const activities = KarisState.recentActivity;
+
+  if (!activities.length) {
+    list.innerHTML = `
+      <div class="empty-state" style="padding: var(--space-8) 0">
+        <div class="empty-state-sub">No recent activity.</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = activities.map(function(a) {
+    return `
+      <div class="activity-item">
+        <div class="activity-icon ${a.type}"
+             aria-hidden="true">
+          ${_instrInitial(a.type)}
+        </div>
+        <div>
+          <div class="activity-title">${a.label}</div>
+          <div class="activity-meta">${a.client} · ${a.date}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Active clients list ── */
+function _renderClientList() {
+  const list = document.getElementById('dash-client-list');
+  if (!list) return;
+
+  /*
+    Show active clients only, capped at 4.
+    Sorted by most recent activity (order in state.js).
+  */
+  const active = KarisState.clients
+    .filter(function(c) { return c.status !== 'dormant'; })
+    .slice(0, 4);
+
+  if (!active.length) {
+    list.innerHTML = `
+      <div class="empty-state" style="padding: var(--space-6) 0">
+        <div class="empty-state-sub">No active clients yet.</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = active.map(function(c) {
+
+    /* Build instrument badge row */
+    const badges = [];
+    if (c.instruments.ocam.status     !== 'not-started') badges.push('<span class="badge badge-ocam">OCAM</span>');
+    if (c.instruments.gold.status     !== 'not-started') badges.push('<span class="badge badge-gold-i">GOLD</span>');
+    if (c.instruments.strategy.status !== 'not-started') badges.push('<span class="badge badge-strategy">Strategy</span>');
+    const badgeHtml = badges.length
+      ? badges.join('')
+      : '<span class="badge badge-muted">Not started</span>';
+
+    /* Status badge */
+    const statusBadge = KarisState.getStatusBadgeClass(c.status);
+    const statusLabel = c.status === 'new' ? 'New' : 'Active';
+
+    return `
+      <div class="table-row clickable"
+           onclick="KarisRouter.goToClient('${c.id}')"
+           style="padding: var(--space-3) 0;
+                  border-color: var(--color-border)">
+
+        <!-- Client initials avatar -->
+        <div style="
+          width: 34px; height: 34px;
+          border-radius: var(--radius-md);
+          background: var(--color-cream-dark);
+          border: 1px solid var(--color-border);
+          display: flex; align-items: center; justify-content: center;
+          font-size: var(--text-sm);
+          font-weight: var(--weight-bold);
+          color: var(--color-navy);
+          flex-shrink: 0;"
+          aria-hidden="true">
+          ${c.name.substring(0, 2).toUpperCase()}
+        </div>
+
+        <!-- Name and meta -->
+        <div style="flex: 1; min-width: 0">
+          <div style="font-weight: var(--weight-semibold);
+                      font-size: var(--text-base);
+                      color: var(--color-navy)"
+               class="truncate">
+            ${c.name}
+          </div>
+          <div style="font-size: var(--text-sm);
+                      color: var(--color-muted);
+                      margin-top: 2px">
+            ${c.lastActivity}
+          </div>
+        </div>
+
+        <!-- Instrument badges -->
+        <div class="d-flex gap-2 flex-shrink-0">${badgeHtml}</div>
+
+      </div>`;
+
+  }).join('');
+}
+
+/* ── Helper: get single letter initial for an instrument type ── */
+function _instrInitial(type) {
+  const map = { 'ocam': 'O', 'gold-i': 'G', 'strategy': 'S', 'system': '·' };
+  return map[type] || '·';
+}
+</script>

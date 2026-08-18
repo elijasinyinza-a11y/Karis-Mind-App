@@ -1,0 +1,705 @@
+/* ============================================================
+   KARIS MIND — Shell CSS
+   css/shell.css
+
+   Styles for the permanent container elements:
+   - Global reset and body
+   - App wrapper layout
+   - Sidebar (expanded + collapsed states)
+   - Topbar
+   - Content area
+   - Runner overlay (full-screen instrument mode)
+   - Modal backdrop
+   - Toast notification
+   - Loading state
+
+   These elements exist in index.html and never change
+   between page navigations. Everything else goes in
+   components.css or the page files themselves.
+   ============================================================ */
+
+
+/* ──────────────────────────────────────────────────────────
+   GLOBAL RESET
+   Zero out browser defaults so we start from scratch.
+────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  /* Prevents layout shift when a scrollbar appears/disappears */
+  scrollbar-gutter: stable;
+}
+
+body {
+  height: 100%;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-cream);
+  line-height: var(--leading-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove default button styles — we style them all explicitly */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+/* Remove default link underlines */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   APP WRAPPER
+   The outermost div. Fills the full viewport.
+   Flex row: sidebar on the left, main on the right.
+────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;  /* Prevent the whole app from scrolling */
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   SIDEBAR
+   Fixed-width left panel. Stays in place on all pages.
+   Transitions between expanded (220px) and collapsed (60px).
+────────────────────────────────────────────────────────── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-navy);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;          /* Never shrink below its defined width */
+  overflow: hidden;        /* Clips content when collapsing */
+  transition: width var(--transition-base);
+  position: relative;
+  z-index: 100;
+}
+
+/* Collapsed state — set by toggleSidebar() in shell.js */
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed);
+}
+
+
+/* ── Sidebar logo area ── */
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 16px var(--space-4);
+  min-height: var(--topbar-height);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidebar-logo:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+}
+
+.logo-mark {
+  /*
+    Gold square with "KM" initials.
+    Always visible — even when sidebar is collapsed.
+  */
+  width: 28px;
+  height: 28px;
+  background: var(--color-gold);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: 12px;
+  color: var(--color-navy);
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.logo-text {
+  /*
+    "Karis Mind" wordmark.
+    Hidden (opacity 0) when sidebar is collapsed.
+    Opacity transition prevents a harsh jump.
+  */
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-size: 15px;
+  color: var(--color-white);
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity var(--transition-fast);
+}
+
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+/* ── Sidebar navigation ── */
+
+.sidebar-nav {
+  flex: 1;              /* Takes all available space between logo and footer */
+  padding: var(--space-3) 0;
+  overflow-y: auto;     /* Scrollable if nav items overflow */
+  overflow-x: hidden;
+}
+
+/* Hide the scrollbar — nav is short enough it rarely scrolls */
+.sidebar-nav::-webkit-scrollbar { width: 0; }
+
+/* Section labels: WORKSPACE / TOOLS / ADMIN */
+.nav-group-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  white-space: nowrap;
+  /* Hidden when collapsed — label has no meaning without text */
+  transition: opacity var(--transition-fast);
+}
+
+.sidebar.collapsed .nav-group-label {
+  opacity: 0;
+}
+
+/* Individual nav item */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 9px var(--space-4);
+  width: 100%;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.52);
+  position: relative;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+}
+
+/* Active state — gold tint + left accent bar */
+.nav-item.active {
+  background: rgba(201, 168, 76, 0.13);
+  color: var(--color-gold);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 3px;
+  background: var(--color-gold);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+}
+
+/* SVG icon inside nav item */
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Text label inside nav item */
+.nav-label {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  transition: opacity var(--transition-fast);
+}
+
+/* Hide labels when collapsed — icons only */
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+}
+
+
+/* ── Sidebar footer: user strip + collapse button ── */
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: var(--space-2) 0;
+  flex-shrink: 0;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 9px var(--space-4);
+  cursor: default;
+}
+
+/* User avatar circle — shows initials */
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-panel);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-white);
+  flex-shrink: 0;
+}
+
+/* User name and role text block */
+.user-info {
+  transition: opacity var(--transition-fast);
+  min-width: 0;
+}
+
+.sidebar.collapsed .user-info {
+  opacity: 0;
+}
+
+.user-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* Collapse/expand toggle button */
+.collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 8px var(--space-4);
+  width: 100%;
+  color: rgba(255, 255, 255, 0.28);
+  transition: color var(--transition-fast);
+}
+
+.collapse-btn:hover {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.collapse-btn:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   MAIN AREA
+   Takes all remaining width to the right of the sidebar.
+   Flex column: topbar on top, content area fills the rest.
+────────────────────────────────────────────────────────── */
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;   /* Prevents flex overflow on narrow screens */
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   TOPBAR
+   Fixed header strip. Always visible above the content area.
+   Left: breadcrumb. Right: notification bell + avatar.
+────────────────────────────────────────────────────────── */
+
+.topbar {
+  height: var(--topbar-height);
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  flex-shrink: 0;
+  gap: var(--space-4);
+  z-index: 50;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* Breadcrumb navigation */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  color: var(--color-muted);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.breadcrumb-item {
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb-item:hover {
+  color: var(--color-text);
+}
+
+.breadcrumb-item.current {
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+  cursor: default;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.breadcrumb-sep {
+  color: var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Icon button in topbar (notification bell) */
+.topbar-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.topbar-icon-btn:hover {
+  background: var(--color-cream);
+  color: var(--color-text);
+}
+
+/* User avatar in topbar */
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-white);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.topbar-avatar:hover {
+  opacity: 0.85;
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   CONTENT AREA
+   The scrollable main panel. Pages load into this div.
+   Padding gives pages breathing room from the edges.
+────────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-6) var(--space-12);
+  scroll-behavior: smooth;
+}
+
+/* Thin scrollbar — less intrusive on the content */
+.content::-webkit-scrollbar {
+  width: 5px;
+}
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Loading state shown before first page renders */
+.shell-loading {
+  color: var(--color-muted);
+  font-size: var(--text-base);
+  padding: var(--space-6);
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   RUNNER OVERLAY
+   Full-screen focused mode for instrument runs.
+   Covers the entire viewport — sidebar and topbar disappear.
+   Opened by openRunner() / closed by closeRunner() in shell.js.
+────────────────────────────────────────────────────────── */
+
+.runner-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-cream);
+  z-index: 200;
+  display: none;         /* Hidden by default */
+  flex-direction: column;
+}
+
+/* .open class added by openRunner() */
+.runner-overlay.open {
+  display: flex;
+}
+
+/* Runner header — simplified topbar showing instrument + progress */
+.runner-header {
+  height: var(--topbar-height);
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  flex-shrink: 0;
+  gap: var(--space-6);
+}
+
+.runner-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-navy);
+  flex-shrink: 0;
+}
+
+/* Progress indicator: label + bar */
+.runner-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  justify-content: center;
+  max-width: 340px;
+}
+
+.runner-progress-label {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.runner-progress-track {
+  flex: 1;
+  height: 5px;
+  background: var(--color-mid);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.runner-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Save & exit button — top right of runner */
+.runner-exit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  transition: color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.runner-exit:hover {
+  color: var(--color-text);
+}
+
+/* Runner body — scrollable question area */
+.runner-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-10) var(--space-6);
+}
+
+.runner-inner {
+  width: 100%;
+  max-width: 680px;
+}
+
+/* Runner footer — navigation buttons */
+.runner-footer {
+  height: 68px;
+  background: var(--color-white);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  flex-shrink: 0;
+  gap: var(--space-3);
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   MODAL BACKDROP
+   Semi-transparent overlay for modal dialogs.
+   Opened by openModal() / closed by closeModal() in shell.js.
+────────────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  /* Subtle fade-in when open */
+  animation: none;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+/* The modal panel itself */
+.modal {
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-8);
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  /* Slight slide-up on open */
+  transform: translateY(0);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-navy);
+  margin-bottom: var(--space-5);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-6);
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   TOAST NOTIFICATION
+   Brief feedback message. Floats bottom-right.
+   Shown by showToast() in shell.js.
+────────────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  background: var(--color-navy);
+  color: var(--color-white);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  /* Hidden by default */
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+  pointer-events: none;
+}
+
+/* .show class added by showToast() */
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* ──────────────────────────────────────────────────────────
+   SCROLLBAR — global thin style
+────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar          { width: 5px; height: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--color-border); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }

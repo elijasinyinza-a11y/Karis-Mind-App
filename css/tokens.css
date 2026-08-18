@@ -1,0 +1,238 @@
+/* ============================================================
+   KARIS MIND — Design Tokens
+   css/tokens.css
+
+   Single source of truth for every visual value in the app.
+   Never use raw hex values or px sizes in any other file.
+   Always reference a token: var(--color-navy), var(--space-4).
+
+   Sections:
+   1. Colour palette
+   2. Instrument colours
+   3. Semantic / status colours
+   4. Typography
+   5. Spacing scale
+   6. Layout dimensions
+   7. Border radius
+   8. Shadows
+   9. Transitions
+   10. Subdomain URLs
+   ============================================================ */
+
+:root {
+
+  /* ──────────────────────────────────────────────────────────
+     1. COLOUR PALETTE
+  ────────────────────────────────────────────────────────── */
+
+  --color-navy:        #0D1B2A;
+  /*
+    Used for: sidebar background, primary headings, strong text.
+    Not used for content area panels or banners.
+  */
+
+  --color-panel:       #223D56;
+  /*
+    Retained as a token but no longer used for content panels.
+    May be used sparingly for isolated accent elements if needed.
+  */
+
+  --color-gold:        #C9A84C;
+  /*
+    Brand gold. Used for: logo mark, active nav highlight,
+    priority card accent bars, brand moments.
+    NOTE: #C9971C is a known drift — always use #C9A84C.
+  */
+
+  --color-cream:       #F5F4F0;
+  /*
+    Page background. All content sits on this warm off-white.
+  */
+
+  --color-cream-dark:  #EDECEA;
+  /*
+    Slightly darker cream. Used for hover states, subtle fills,
+    and section separators within white cards.
+  */
+
+  --color-mid:         #E8E6E0;
+  /*
+    Used for: progress bar tracks, dividers, skeleton loaders.
+  */
+
+  --color-border:      #D5D2CA;
+  /*
+    Standard border for cards, inputs, table rows, dividers.
+  */
+
+  --color-border-strong: #BAB7AF;
+  /*
+    Slightly darker border. Used for emphasis borders,
+    e.g. priority card left accent, active states.
+  */
+
+  --color-white:       #FFFFFF;
+  /*
+    Card backgrounds, topbar, sidebar footer, input backgrounds.
+  */
+
+  --color-text:        #1A2B3C;
+  /*
+    Primary body text. Strong but not pure black.
+  */
+
+  --color-muted:       #6B7A8D;
+  /*
+    Secondary text. Labels, metadata, captions, placeholders.
+  */
+
+  --color-subtle:      #9BA8B5;
+  /*
+    Tertiary text. Lighter than muted. Used for empty state
+    icons, disabled states, fine print.
+  */
+
+
+  /* ──────────────────────────────────────────────────────────
+     2. INSTRUMENT COLOURS
+     Each instrument has a colour identity used for:
+     badges, tab active state, bar fills, runner progress,
+     colour bars on status cards.
+  ────────────────────────────────────────────────────────── */
+
+  --color-ocam:             #1D9E75;   /* OCAM™ teal              */
+  --color-ocam-light:       #E8F7F2;   /* OCAM™ light teal bg     */
+  --color-ocam-border:      #A7E0CE;   /* OCAM™ border accent     */
+
+  --color-gold-instr:       #378ADD;   /* GOLD™ blue              */
+  --color-gold-instr-light: #EBF3FC;   /* GOLD™ light blue bg     */
+  --color-gold-instr-border:#A8CAEF;   /* GOLD™ border accent     */
+  /*
+    NOTE: --color-gold-instr (blue) = GOLD™ instrument colour.
+    --color-gold (amber) = brand accent. Never swap these.
+  */
+
+  --color-strategy:         #00B2B8;   /* Strategy cyan           */
+  --color-strategy-light:   #E6F8F9;   /* Strategy light cyan bg  */
+  --color-strategy-border:  #99DDE0;   /* Strategy border accent  */
+
+  --color-cascade:          #7C5CBF;   /* Cascade violet          */
+  --color-cascade-light:    #F2EEF9;   /* Cascade light violet bg */
+  --color-cascade-border:   #C0ADEA;   /* Cascade border accent   */
+
+  --color-gold-light:       #FBF6EC;   /* brand gold light bg     */
+  --color-gold-border:      #E8D49A;   /* brand gold border       */
+
+
+  /* ──────────────────────────────────────────────────────────
+     3. SEMANTIC / STATUS COLOURS
+  ────────────────────────────────────────────────────────── */
+
+  --color-success:        #10B981;
+  --color-success-bg:     #D1FAE5;
+  --color-success-border: #6EE7B7;
+
+  --color-warning:        #F59E0B;
+  --color-warning-bg:     #FEF3C7;
+  --color-warning-border: #FCD34D;
+
+  --color-error:          #EF4444;
+  --color-error-bg:       #FEE2E2;
+  --color-error-border:   #FCA5A5;
+
+
+  /* ──────────────────────────────────────────────────────────
+     4. TYPOGRAPHY
+  ────────────────────────────────────────────────────────── */
+
+  --font-display:      'DM Sans', sans-serif;
+  --font-body:         'Inter', sans-serif;
+
+  --text-xs:    11px;
+  --text-sm:    12px;
+  --text-base:  13px;
+  --text-md:    14px;
+  --text-lg:    16px;
+  --text-xl:    18px;
+  --text-2xl:   22px;
+  --text-3xl:   28px;
+  --text-4xl:   36px;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  --leading-tight:   1.2;
+  --leading-snug:    1.4;
+  --leading-base:    1.5;
+  --leading-relaxed: 1.6;
+
+
+  /* ──────────────────────────────────────────────────────────
+     5. SPACING SCALE
+  ────────────────────────────────────────────────────────── */
+
+  --space-1:    4px;
+  --space-2:    8px;
+  --space-3:    12px;
+  --space-4:    16px;
+  --space-5:    20px;
+  --space-6:    24px;
+  --space-8:    32px;
+  --space-10:   40px;
+  --space-12:   48px;
+  --space-16:   64px;
+
+
+  /* ──────────────────────────────────────────────────────────
+     6. LAYOUT DIMENSIONS
+  ────────────────────────────────────────────────────────── */
+
+  --sidebar-width:      220px;
+  --sidebar-collapsed:   60px;
+  --topbar-height:       56px;
+  --content-max:       1200px;
+
+
+  /* ──────────────────────────────────────────────────────────
+     7. BORDER RADIUS
+  ────────────────────────────────────────────────────────── */
+
+  --radius-sm:    6px;
+  --radius-md:    8px;
+  --radius-lg:   10px;
+  --radius-xl:   12px;
+  --radius-2xl:  16px;
+  --radius-full: 9999px;
+
+
+  /* ──────────────────────────────────────────────────────────
+     8. SHADOWS
+  ────────────────────────────────────────────────────────── */
+
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm:  0 1px 4px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.09), 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.11), 0 4px 8px rgba(0, 0, 0, 0.06);
+
+
+  /* ──────────────────────────────────────────────────────────
+     9. TRANSITIONS
+  ────────────────────────────────────────────────────────── */
+
+  --transition-fast:   0.12s ease;
+  --transition-base:   0.20s ease;
+  --transition-slow:   0.35s ease;
+
+
+  /* ──────────────────────────────────────────────────────────
+     10. SUBDOMAIN URLs
+  ────────────────────────────────────────────────────────── */
+
+  --url-ocam:     'https://ocam.karismind.com';
+  --url-gold:     'https://gold.karismind.com';
+  --url-strategy: 'https://strategy.karismind.com';
+  --url-app:      'https://app.karismind.com';
+
+}
