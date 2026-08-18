@@ -1,5 +1,732 @@
-<!-- client-record — built in a future session -->
-<div style="padding: 8px 0">
-  <div class="page-title" style="margin-bottom:6px; text-transform:capitalize">client-record</div>
-  <div class="page-subtitle">Coming in a future session.</div>
+<!--
+  ============================================================
+  CLIENT RECORD PAGE
+  pages/client-record.html
+
+  The core screen of the workspace. Renders any client's
+  real state from KarisState — not hardcoded to one client.
+
+  Init: init_client_record(clientId, tab) — called by router.
+
+  Structure:
+  - #client-record-root : filled by init with header + tabs
+  - Runner overlays     : OCAM, GOLD, Strategy (focused mode)
+
+  Tabs: Overview | OCAM | GOLD | Strategy | Reports
+  Each instrument tab reflects that client's actual status.
+  ============================================================
+-->
+
+<div id="client-record-root">
+  <!-- Filled by init_client_record() -->
 </div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     RUNNER OVERLAYS
+     Full-screen focused mode. Hidden until openRunner() called.
+     These are generic — they read the active client from state.
+═══════════════════════════════════════════════════════════ -->
+
+<!-- ── OCAM RUNNER ── -->
+<div class="runner-overlay" id="runner-ocam">
+  <div class="runner-header">
+    <div class="runner-title">
+      <span class="badge badge-ocam">OCAM™</span>
+      <span id="ocam-runner-client">Organisational Culture Diagnostic</span>
+    </div>
+    <div class="runner-progress">
+      <span class="runner-progress-label" id="ocam-prog-label">Subscale 5 of 7</span>
+      <div class="runner-progress-track">
+        <div class="runner-progress-fill" id="ocam-prog-fill"
+             style="background: var(--color-ocam); width: 57%"></div>
+      </div>
+    </div>
+    <button class="runner-exit" onclick="closeRunner('ocam','ocam')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
+           stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      Save &amp; exit
+    </button>
+  </div>
+
+  <div class="runner-body">
+    <div class="runner-inner">
+
+      <!-- Step 1: questions -->
+      <div id="ocam-step-questions">
+        <div class="text-xs font-semibold uppercase tracking-wide text-muted mb-2">
+          Subscale 5 of 7
+        </div>
+        <div class="font-display text-2xl font-semibold text-navy mb-2">Competence</div>
+        <div class="text-md text-muted mb-6" style="line-height: var(--leading-relaxed)">
+          Rate each statement based on what you observe in your organisation.
+          1 = Strongly disagree · 5 = Strongly agree
+        </div>
+
+        <div class="question-block">
+          <div class="question-text">
+            People in this organisation have the skills needed to do their jobs effectively.
+          </div>
+          <div class="likert-scale">
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">1</span>Strongly disagree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">2</span>Disagree</div>
+            <div class="likert-option selected" onclick="selectLikert(this)"><span class="likert-val">3</span>Neutral</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">4</span>Agree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">5</span>Strongly agree</div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-text">
+            Training and development opportunities are readily available.
+          </div>
+          <div class="likert-scale">
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">1</span>Strongly disagree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">2</span>Disagree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">3</span>Neutral</div>
+            <div class="likert-option selected" onclick="selectLikert(this)"><span class="likert-val">4</span>Agree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">5</span>Strongly agree</div>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-text">
+            Poor performance is addressed promptly and constructively.
+          </div>
+          <div class="likert-scale">
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">1</span>Strongly disagree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">2</span>Disagree</div>
+            <div class="likert-option selected" onclick="selectLikert(this)"><span class="likert-val">3</span>Neutral</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">4</span>Agree</div>
+            <div class="likert-option" onclick="selectLikert(this)"><span class="likert-val">5</span>Strongly agree</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: results -->
+      <div id="ocam-step-results" style="display: none">
+        <div class="text-xs font-semibold uppercase tracking-wide text-ocam mb-2">
+          Diagnostic complete
+        </div>
+        <div class="font-display text-2xl font-semibold text-navy mb-5">
+          OCAM™ Results
+        </div>
+        <div class="grid-2" style="gap: var(--space-3)">
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Clarity</div><div class="font-display text-3xl font-bold text-navy">3.6<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:72%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Cohesion</div><div class="font-display text-3xl font-bold text-navy">3.2<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:64%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Commitment</div><div class="font-display text-3xl font-bold text-navy">4.0<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:80%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Communication</div><div class="font-display text-3xl font-bold text-navy">3.0<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:60%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Competence</div><div class="font-display text-3xl font-bold text-navy">3.4<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:68%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Creativity</div><div class="font-display text-3xl font-bold text-navy">2.8<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:56%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm"><div class="text-sm text-muted mb-2">Character</div><div class="font-display text-3xl font-bold text-navy">3.8<span class="text-md text-muted">/5</span></div><div style="height:6px;background:var(--color-mid);border-radius:99px;margin-top:8px;overflow:hidden"><div style="width:76%;height:100%;background:var(--color-ocam);border-radius:99px"></div></div></div>
+          <div class="card card-sm" style="background:var(--color-navy);border-color:var(--color-navy)"><div class="text-sm mb-2" style="color:rgba(255,255,255,.55)">Overall OCAM</div><div class="font-display text-3xl font-bold" style="color:var(--color-gold)">3.4<span class="text-md" style="color:rgba(255,255,255,.4)">/5</span></div><div class="text-sm" style="color:rgba(255,255,255,.45);margin-top:6px">Developing culture</div></div>
+        </div>
+        <div class="card mt-4" style="border-left:4px solid var(--color-ocam)">
+          <div class="text-xs font-semibold uppercase tracking-wide text-ocam mb-2">Interpretation</div>
+          <div class="text-md" style="line-height:var(--leading-relaxed);color:var(--color-text)">
+            When the backend is live, an AI-generated narrative interpretation
+            will appear here — grounded in these scores and your organisational
+            framework. For now this is a placeholder.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="runner-footer">
+    <button class="btn btn-secondary" id="ocam-back-btn" onclick="_ocamBack()" style="display:none">← Back</button>
+    <div class="flex-1"></div>
+    <button class="btn btn-primary" id="ocam-next-btn" onclick="_ocamNext()">Next subscale →</button>
+  </div>
+</div>
+
+
+<!-- ── GOLD RUNNER ── -->
+<div class="runner-overlay" id="runner-gold">
+  <div class="runner-header">
+    <div class="runner-title">
+      <span class="badge badge-gold-i">GOLD™</span>
+      <span id="gold-runner-client">Leadership Assessment</span>
+    </div>
+    <div class="runner-progress">
+      <span class="runner-progress-label">Setup</span>
+      <div class="runner-progress-track">
+        <div class="runner-progress-fill" style="background: var(--color-gold-instr); width: 25%"></div>
+      </div>
+    </div>
+    <button class="runner-exit" onclick="closeRunner('gold','gold')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
+           stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      Save &amp; exit
+    </button>
+  </div>
+
+  <div class="runner-body">
+    <div class="runner-inner">
+      <div class="text-xs font-semibold uppercase tracking-wide text-muted mb-2">Step 1 of 3</div>
+      <div class="font-display text-2xl font-semibold text-navy mb-2">Set up the assessment</div>
+      <div class="text-md text-muted mb-6" style="line-height:var(--leading-relaxed)">
+        Confirm who will be assessed in this GOLD round.
+      </div>
+      <div class="form-field">
+        <label class="form-label">Assessment type</label>
+        <select class="form-select">
+          <option>Individual assessment</option>
+          <option selected>Group assessment (multiple participants)</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Participants (one name per line)</label>
+        <textarea class="form-textarea" placeholder="Enter participant names…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="runner-footer">
+    <div class="flex-1"></div>
+    <button class="btn btn-primary" onclick="closeRunner('gold','gold'); showToast('GOLD assessment saved.')">
+      Begin assessment →
+    </button>
+  </div>
+</div>
+
+
+<!-- ── STRATEGY RUNNER ── -->
+<div class="runner-overlay" id="runner-strategy">
+  <div class="runner-header">
+    <div class="runner-title">
+      <span class="badge badge-strategy">Strategy</span>
+      <span id="strategy-runner-client">7Cs Engagement</span>
+    </div>
+    <div class="runner-progress">
+      <span class="runner-progress-label" id="strategy-prog-label">Stage 1 of 7 — Conception</span>
+      <div class="runner-progress-track">
+        <div class="runner-progress-fill" id="strategy-prog-fill"
+             style="background: var(--color-strategy); width: 14%"></div>
+      </div>
+    </div>
+    <button class="runner-exit" onclick="closeRunner('strategy','strategy')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
+           stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      Save &amp; exit
+    </button>
+  </div>
+
+  <div class="runner-body">
+    <div class="runner-inner">
+      <div class="text-xs font-semibold uppercase tracking-wide text-strategy mb-2"
+           id="strategy-stage-label">Stage 1 — Conception</div>
+      <div class="font-display text-2xl font-semibold text-navy mb-2"
+           id="strategy-stage-title">What is the strategic intent?</div>
+      <div class="text-md text-muted mb-6" style="line-height:var(--leading-relaxed)"
+           id="strategy-stage-desc">
+        Capture the founding idea of this engagement. What is the organisation
+        trying to become, and why now?
+      </div>
+      <div class="form-field">
+        <label class="form-label">Strategic intent statement</label>
+        <textarea class="form-textarea" placeholder="Describe the core strategic intent…"></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Key drivers (internal and external)</label>
+        <textarea class="form-textarea" style="min-height:80px" placeholder="What is prompting this work?"></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Time horizon</label>
+        <select class="form-select">
+          <option>1 year</option>
+          <option selected>3 years</option>
+          <option>5 years</option>
+          <option>10 years</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="runner-footer">
+    <div class="flex-1"></div>
+    <button class="btn btn-primary" onclick="closeRunner('strategy','strategy'); showToast('Stage saved.')">
+      Save stage &amp; continue →
+    </button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE SCRIPT
+═══════════════════════════════════════════════════════════ -->
+<script>
+
+/* Called by router with the client id + which tab to open */
+function init_client_record(clientId, tab) {
+  const client = KarisState.getClient(clientId || KarisState.currentClientId);
+  if (!client) {
+    document.getElementById('client-record-root').innerHTML =
+      '<div class="empty-state"><div class="empty-state-title">Client not found</div></div>';
+    return;
+  }
+
+  _renderClientRecord(client);
+
+  /* Set runner client-name labels */
+  _setText('ocam-runner-client', 'Organisational Culture Diagnostic — ' + client.name);
+  _setText('gold-runner-client', 'Leadership Assessment — ' + client.name);
+  _setText('strategy-runner-client', '7Cs Engagement — ' + client.name);
+
+  /* Open the requested tab (default overview) */
+  showTab(tab || 'overview');
+}
+
+
+/* ── Render the whole record for a client ── */
+function _renderClientRecord(c) {
+  const root = document.getElementById('client-record-root');
+
+  /* Status badge for the header */
+  let statusLabel = 'Active engagement';
+  let statusClass = 'badge-success';
+  if (c.status === 'new')     { statusLabel = 'New';     statusClass = 'badge-muted'; }
+  if (c.status === 'dormant') { statusLabel = 'Dormant'; statusClass = 'badge-muted'; }
+
+  root.innerHTML = `
+    <!-- Header -->
+    <div class="record-header">
+      <div>
+        <div class="record-org-name">${c.name}</div>
+        <div class="record-meta">
+          <span class="record-meta-item">${c.fullName || c.name}</span>
+          <span class="record-meta-sep">·</span>
+          <span class="record-meta-item">${c.sector || '—'}</span>
+          ${c.location ? '<span class="record-meta-sep">·</span><span class="record-meta-item">' + c.location + '</span>' : ''}
+          ${c.contact ? '<span class="record-meta-sep">·</span><span class="record-meta-item">' + c.contact.name + '</span>' : ''}
+        </div>
+      </div>
+      <div class="record-actions">
+        <span class="badge ${statusClass}">${statusLabel}</span>
+        <button class="btn btn-secondary btn-sm">Edit</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <div class="tab active" data-tab="overview"    onclick="showTab('overview')">Overview</div>
+      <div class="tab"        data-tab="ocam"        onclick="showTab('ocam')">OCAM™</div>
+      <div class="tab"        data-tab="gold"        onclick="showTab('gold')">GOLD™</div>
+      <div class="tab"        data-tab="strategy"    onclick="showTab('strategy')">Strategy</div>
+      <div class="tab"        data-tab="rec-reports" onclick="showTab('rec-reports')">Reports</div>
+    </div>
+
+    <div class="tab-panel active" id="tab-overview">${_renderOverview(c)}</div>
+    <div class="tab-panel"        id="tab-ocam">${_renderOcamTab(c)}</div>
+    <div class="tab-panel"        id="tab-gold">${_renderGoldTab(c)}</div>
+    <div class="tab-panel"        id="tab-strategy">${_renderStrategyTab(c)}</div>
+    <div class="tab-panel"        id="tab-rec-reports">${_renderReportsTab(c)}</div>
+  `;
+}
+
+
+/* ── OVERVIEW TAB ── */
+function _renderOverview(c) {
+  return `
+    <div class="grid-2">
+      <div>
+        ${_instrumentStatusCard(c, 'ocam',     'OCAM™',          'var(--color-ocam)')}
+        ${_instrumentStatusCard(c, 'gold',     'GOLD™',          'var(--color-gold-instr)')}
+        ${_instrumentStatusCard(c, 'strategy', 'Strategy (7Cs)', 'var(--color-strategy)')}
+      </div>
+      <div>
+        <div class="card mb-4">
+          <div class="card-title">Consultant notes</div>
+          <textarea class="form-textarea" style="min-height:100px"
+                    onchange="_saveNotes('${c.id}', this.value)"
+                    placeholder="Add private notes about this engagement…">${c.notes || ''}</textarea>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent activity</div>
+          ${_activityList(c.activity)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
+/* ── Instrument status card (overview) ── */
+function _instrumentStatusCard(c, key, label, colour) {
+  const instr = c.instruments[key];
+  const status = instr ? instr.status : 'not-started';
+
+  let statusHtml = '';
+  let scoreHtml  = '';
+  let btnHtml    = '';
+
+  if (status === 'complete') {
+    if (key === 'ocam') {
+      statusHtml = '<span class="status-dot dot-green"></span>Complete';
+      scoreHtml  = _scoreBlock(instr.score, 'overall', colour);
+    } else if (key === 'gold') {
+      statusHtml = '<span class="status-dot dot-green"></span>Complete · ' + instr.participants + ' participants';
+      scoreHtml  = _scoreBlock(instr.groupScore, 'group avg', colour);
+    } else {
+      statusHtml = '<span class="status-dot dot-green"></span>Complete';
+    }
+    btnHtml = '<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); showTab(\'' + key + '\')">View</button>';
+
+  } else if (status === 'in-progress') {
+    if (key === 'ocam') {
+      statusHtml = '<span class="status-dot dot-amber"></span>In progress · ' + (instr.progress || '');
+      scoreHtml  = _scoreBlock(instr.score, 'avg so far', colour);
+    } else if (key === 'strategy') {
+      const names = ['','Conception','Consultation','Confirmation','Composition','Communication','Coordination','Controlling'];
+      statusHtml = '<span class="status-dot dot-amber"></span>Stage ' + instr.stage + ' — ' + (names[instr.stage] || '');
+    } else {
+      statusHtml = '<span class="status-dot dot-amber"></span>In progress';
+    }
+    btnHtml = '<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openRunner(\'' + key + '\')">Continue</button>';
+
+  } else {
+    statusHtml = '<span class="status-dot dot-grey"></span>Not started';
+    btnHtml = '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openRunner(\'' + key + '\')">Begin</button>';
+  }
+
+  return `
+    <div class="instr-status-card" onclick="showTab('${key}')">
+      <div class="instr-colour-bar" style="background: ${colour}"></div>
+      <div class="instr-card-info">
+        <div class="instr-card-name">${label}</div>
+        <div class="instr-card-status">${statusHtml}</div>
+      </div>
+      <div class="instr-card-right">
+        ${scoreHtml}
+        ${btnHtml}
+      </div>
+    </div>
+  `;
+}
+
+function _scoreBlock(val, label, colour) {
+  return `
+    <div class="instr-card-score">
+      <div class="instr-card-score-val" style="color: ${colour}">${val}</div>
+      <div class="instr-card-score-label">${label}</div>
+    </div>`;
+}
+
+
+/* ── OCAM TAB ── */
+function _renderOcamTab(c) {
+  const instr = c.instruments.ocam;
+  const status = instr ? instr.status : 'not-started';
+
+  if (status === 'not-started') {
+    return _instrumentEmptyState('ocam', 'OCAM™ diagnostic not started',
+      'Run the OCAM diagnostic to assess organisational culture across seven subscales.',
+      'Begin OCAM diagnostic');
+  }
+
+  /* Build subscale bars from real data */
+  const subscaleOrder = ['clarity','cohesion','commitment','communication','competence','creativity','character'];
+  const labels = { clarity:'Clarity', cohesion:'Cohesion', commitment:'Commitment', communication:'Communication', competence:'Competence', creativity:'Creativity', character:'Character' };
+
+  let bars = '';
+  subscaleOrder.forEach(function(key) {
+    const sub = instr.subscales ? instr.subscales[key] : null;
+    if (sub) {
+      bars += '<div class="subscale-row"><span class="subscale-label">' + labels[key] + '</span><div class="subscale-bar-track"><div class="subscale-bar-fill" style="width:' + sub.pct + '%"></div></div><span class="subscale-val">' + sub.score.toFixed(1) + '</span></div>';
+    } else {
+      bars += '<div class="subscale-row" style="opacity:.3"><span class="subscale-label">' + labels[key] + '</span><div class="subscale-bar-track"><div class="subscale-bar-fill" style="width:0%"></div></div><span class="subscale-val">—</span></div>';
+    }
+  });
+
+  const isComplete = status === 'complete';
+  const headerNote = isComplete
+    ? 'Round 1 · Completed ' + instr.lastRun
+    : 'Round 1 · Started ' + instr.lastRun + ' · ' + (instr.progress || 'In progress');
+  const btnLabel = isComplete ? 'Run new round' : 'Continue diagnostic →';
+  const btnClass = isComplete ? 'btn-secondary' : 'btn-primary';
+
+  return `
+    <div class="d-flex align-center justify-between mb-5" style="flex-wrap:wrap;gap:var(--space-3)">
+      <div>
+        <div class="font-display text-lg font-semibold text-navy">OCAM™ — Organisational Culture Assessment</div>
+        <div class="text-sm text-muted mt-2">${headerNote}</div>
+      </div>
+      <button class="btn ${btnClass}" onclick="openRunner('ocam')">${btnLabel}</button>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-title">Subscale results${isComplete ? '' : ' so far'}</div>
+      ${bars}
+    </div>
+
+    ${_subdomainCard('ocam')}
+  `;
+}
+
+
+/* ── GOLD TAB ── */
+function _renderGoldTab(c) {
+  const instr = c.instruments.gold;
+  const status = instr ? instr.status : 'not-started';
+
+  if (status === 'not-started') {
+    return _instrumentEmptyState('gold', 'GOLD™ assessment not started',
+      'Run the GOLD assessment to evaluate leadership individually and as a group.',
+      'Begin GOLD assessment');
+  }
+
+  /* Individual profiles */
+  let profiles = '';
+  (instr.individuals || []).forEach(function(p) {
+    profiles += `
+      <div class="d-flex align-center gap-3" style="padding:10px 0;border-bottom:1px solid var(--color-border)">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--color-gold-instr-light);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--color-gold-instr);flex-shrink:0">${p.initials}</div>
+        <div style="flex:1"><div class="text-base font-medium">${p.name}</div><div class="text-sm text-muted">${p.band}</div></div>
+        <div class="font-display text-lg font-bold" style="color:var(--color-gold-instr)">${p.score}</div>
+      </div>`;
+  });
+
+  return `
+    <div class="d-flex align-center justify-between mb-5" style="flex-wrap:wrap;gap:var(--space-3)">
+      <div>
+        <div class="font-display text-lg font-semibold text-navy">GOLD™ — Leadership Assessment</div>
+        <div class="text-sm text-muted mt-2">Round 1 · Completed ${instr.lastRun} · ${instr.participants} participants</div>
+      </div>
+      <button class="btn btn-secondary" onclick="openRunner('gold')">Run new round</button>
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="text-align:center;padding:var(--space-8)">
+        <div class="font-display font-bold" style="font-size:56px;color:var(--color-gold-instr);line-height:1">${instr.groupScore}</div>
+        <div class="text-sm text-muted mt-2">Group leadership score</div>
+        <div class="mt-3"><span class="badge badge-gold-i">${instr.band}</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Individual profiles</div>
+        ${profiles}
+      </div>
+    </div>
+
+    ${_subdomainCard('gold')}
+  `;
+}
+
+
+/* ── STRATEGY TAB ── */
+function _renderStrategyTab(c) {
+  const instr = c.instruments.strategy;
+  const status = instr ? instr.status : 'not-started';
+  const stages = ['Conception','Consultation','Confirmation','Composition','Communication','Coordination','Controlling'];
+  const currentStage = instr ? (instr.stage || 0) : 0;
+
+  /* Build the stage rail */
+  let rail = '';
+  stages.forEach(function(name, i) {
+    const n = i + 1;
+    let cls = '';
+    if (n < currentStage)  cls = 'done';
+    if (n === currentStage) cls = 'current';
+    rail += '<div class="stage-item ' + cls + '"><div class="stage-dot">' + n + '</div><div class="stage-name">' + name + '</div></div>';
+  });
+
+  const railHtml = '<div class="stage-rail">' + rail + '</div>';
+
+  if (status === 'not-started') {
+    return `
+      ${_strategyHeader(c, 'Engagement not yet started', 'Begin engagement →')}
+      ${railHtml}
+      <div class="empty-state">
+        <div class="empty-state-icon">◎</div>
+        <div class="empty-state-title">Strategy engagement not started</div>
+        <div class="empty-state-sub">Begin the 7Cs engagement to work through the full strategic lifecycle with ${c.name}.</div>
+        <button class="btn btn-primary" onclick="openRunner('strategy')">Begin engagement</button>
+      </div>
+      ${_subdomainCard('strategy')}
+    `;
+  }
+
+  /* In progress */
+  return `
+    ${_strategyHeader(c, 'Stage ' + currentStage + ' of 7 — ' + stages[currentStage-1] + ' in progress', 'Continue engagement →')}
+    ${railHtml}
+    <div class="card mb-4">
+      <div class="card-title">Current stage — ${stages[currentStage-1]}</div>
+      <div class="text-md text-muted" style="line-height:var(--leading-relaxed)">
+        This engagement is currently on stage ${currentStage} of 7. Continue to
+        capture the outputs for this stage and progress the lifecycle.
+      </div>
+      <div class="mt-4">
+        <button class="btn btn-primary" onclick="openRunner('strategy')">Continue engagement →</button>
+      </div>
+    </div>
+    ${_subdomainCard('strategy')}
+  `;
+}
+
+function _strategyHeader(c, note, btnLabel) {
+  return `
+    <div class="d-flex align-center justify-between mb-5" style="flex-wrap:wrap;gap:var(--space-3)">
+      <div>
+        <div class="font-display text-lg font-semibold text-navy">Strategy — 7Cs Framework</div>
+        <div class="text-sm text-muted mt-2">${note}</div>
+      </div>
+      <button class="btn btn-primary" onclick="openRunner('strategy')">${btnLabel}</button>
+    </div>`;
+}
+
+
+/* ── REPORTS TAB ── */
+function _renderReportsTab(c) {
+  const reports = c.reports || [];
+
+  if (!reports.length) {
+    return `
+      <div class="d-flex align-center justify-between mb-5">
+        <div class="page-title" style="font-size:var(--text-lg)">Reports</div>
+        <button class="btn btn-secondary">Generate report</button>
+      </div>
+      <div class="empty-state">
+        <div class="empty-state-icon">▤</div>
+        <div class="empty-state-title">No reports yet</div>
+        <div class="empty-state-sub">Reports become available once an instrument diagnostic is complete.</div>
+      </div>`;
+  }
+
+  let rows = '';
+  reports.forEach(function(r) {
+    const badgeClass = r.instrument === 'ocam' ? 'badge-ocam' : (r.instrument === 'gold-i' || r.instrument === 'gold') ? 'badge-gold-i' : 'badge-strategy';
+    const badgeLabel = r.instrument === 'ocam' ? 'OCAM' : (r.instrument === 'gold-i' || r.instrument === 'gold') ? 'GOLD' : 'Strategy';
+    rows += `
+      <div class="table-row">
+        <div class="text-sm text-muted" style="min-width:90px">${r.date}</div>
+        <div style="flex:1;font-weight:500">${r.label}</div>
+        <span class="badge ${badgeClass}">${badgeLabel}</span>
+        <button class="btn btn-ghost btn-sm ml-auto">↓ Download</button>
+      </div>`;
+  });
+
+  return `
+    <div class="d-flex align-center justify-between mb-5">
+      <div class="page-title" style="font-size:var(--text-lg)">Reports</div>
+      <button class="btn btn-secondary">Generate report</button>
+    </div>
+    <div class="table-wrap">${rows}</div>`;
+}
+
+
+/* ── Shared helpers ── */
+
+function _instrumentEmptyState(key, title, sub, btnLabel) {
+  return `
+    <div class="empty-state" style="padding-top:var(--space-10)">
+      <div class="empty-state-icon">◎</div>
+      <div class="empty-state-title">${title}</div>
+      <div class="empty-state-sub">${sub}</div>
+      <button class="btn btn-primary" onclick="openRunner('${key}')">${btnLabel}</button>
+    </div>
+    ${_subdomainCard(key)}
+  `;
+}
+
+function _subdomainCard(key) {
+  const map = {
+    ocam:     { cls:'ocam',          icon:'O', name:'OCAM™',    url:'ocam.karismind.com' },
+    gold:     { cls:'gold-i',        icon:'G', name:'GOLD™',    url:'gold.karismind.com' },
+    strategy: { cls:'strategy-card', icon:'S', name:'Strategy', url:'strategy.karismind.com' }
+  };
+  const m = map[key];
+  const iconCls = key === 'strategy' ? 'strategy' : m.cls;
+  return `
+    <div class="card mt-4">
+      <div class="card-title">Run from subdomain</div>
+      <p class="text-sm text-muted mb-4" style="line-height:var(--leading-relaxed)">
+        Participants can complete this instrument directly on the public
+        subdomain. Results can be linked back to this client record.
+      </p>
+      <a class="subdomain-card ${m.cls}" href="https://${m.url}" target="_blank" rel="noopener noreferrer" style="max-width:380px">
+        <div class="subdomain-icon ${iconCls}">${m.icon}</div>
+        <div class="subdomain-info">
+          <div class="subdomain-name">${m.name} — Public instrument</div>
+          <div class="subdomain-url">${m.url}</div>
+        </div>
+        <svg class="subdomain-arrow" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </a>
+    </div>`;
+}
+
+function _activityList(activity) {
+  if (!activity || !activity.length) {
+    return '<div class="text-sm text-muted">No activity yet.</div>';
+  }
+  let html = '<div class="activity-list">';
+  activity.forEach(function(a) {
+    const initial = { ocam:'O','gold-i':'G',strategy:'S',system:'·' }[a.type] || '·';
+    html += `
+      <div class="activity-item">
+        <div class="activity-icon ${a.type}">${initial}</div>
+        <div>
+          <div class="activity-title">${a.label}</div>
+          <div class="activity-meta">${a.date}${a.user ? ' · ' + a.user : ''}</div>
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function _saveNotes(clientId, notes) {
+  KarisAPI.updateClientNotes(clientId, notes);
+  showToast('Notes saved.');
+}
+
+function _setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+
+/* ── OCAM runner step navigation ── */
+/* Use window property (not `let`) so re-loading the page
+   doesn't throw "already declared" — the router re-executes
+   this script each time a client record opens. */
+window._ocamStep = window._ocamStep || 0;
+
+function _ocamNext() {
+  if (window._ocamStep === 0) {
+    document.getElementById('ocam-step-questions').style.display = 'none';
+    document.getElementById('ocam-step-results').style.display = 'block';
+    _setText('ocam-prog-label', 'Complete');
+    document.getElementById('ocam-prog-fill').style.width = '100%';
+    document.getElementById('ocam-back-btn').style.display = 'inline-flex';
+    const nextBtn = document.getElementById('ocam-next-btn');
+    nextBtn.textContent = 'Save to client record';
+    nextBtn.onclick = function() { closeRunner('ocam','ocam'); showToast('OCAM results saved.'); };
+    window._ocamStep = 1;
+  }
+}
+
+function _ocamBack() {
+  if (window._ocamStep === 1) {
+    document.getElementById('ocam-step-results').style.display = 'none';
+    document.getElementById('ocam-step-questions').style.display = 'block';
+    _setText('ocam-prog-label', 'Subscale 5 of 7');
+    document.getElementById('ocam-prog-fill').style.width = '57%';
+    document.getElementById('ocam-back-btn').style.display = 'none';
+    const nextBtn = document.getElementById('ocam-next-btn');
+    nextBtn.textContent = 'Next subscale →';
+    nextBtn.onclick = _ocamNext;
+    window._ocamStep = 0;
+  }
+}
+
+</script>
