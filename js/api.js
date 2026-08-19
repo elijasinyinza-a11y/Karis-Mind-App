@@ -378,6 +378,46 @@ const KarisAPI = {
     console.log('[API] updatePreferences →', prefs);
     KarisState.preferences = Object.assign(KarisState.preferences || {}, prefs);
     return { status: 'saved', preferences: KarisState.preferences };
+  },
+
+  /* ──────────────────────────────────────────────────────────
+     CASCADE — WORKPLANS
+  ────────────────────────────────────────────────────────── */
+
+  async getWorkplans(clientId) {
+    console.log('[API] getWorkplans →', clientId || 'all');
+    if (clientId) {
+      return KarisState.workplans.filter(w => w.clientId === clientId);
+    }
+    return KarisState.workplans;
+  },
+
+  async createWorkplan(payload) {
+    /*
+      TODO (live): INSERT INTO cascade_workplans (...)
+      payload: { title, clientId, source, workstreams }
+    */
+    console.log('[API] createWorkplan →', payload);
+    const workplan = {
+      id: 'wp-' + Date.now(),
+      created: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }),
+      workstreams: [],
+      ...payload
+    };
+    KarisState.workplans.unshift(workplan);
+    return workplan;
+  },
+
+  async updateTaskStatus(workplanId, workstreamIdx, taskIdx, status) {
+    /*
+      TODO (live): UPDATE cascade_tasks SET status = ... WHERE id = ...
+    */
+    console.log('[API] updateTaskStatus →', workplanId, workstreamIdx, taskIdx, status);
+    const wp = KarisState.workplans.find(w => w.id === workplanId);
+    if (wp && wp.workstreams[workstreamIdx] && wp.workstreams[workstreamIdx].tasks[taskIdx]) {
+      wp.workstreams[workstreamIdx].tasks[taskIdx].status = status;
+    }
+    return { status: 'saved' };
   }
 
 };

@@ -274,6 +274,56 @@ const KarisState = {
   ],
 
   /* ──────────────────────────────────────────────────────────
+     CASCADE — WORKPLANS
+     A workplan decomposes into workstreams → tasks.
+     source: 'strategy' (decomposed from a 7Cs engagement)
+             'upload'   (standalone imported workplan)
+     Replace with Supabase cascade_workplans / cascade_tasks when live.
+  ────────────────────────────────────────────────────────── */
+  workplans: [
+    {
+      id: 'wp-001',
+      title: 'LpWSC — Strategy Execution Plan',
+      clientId: 'lpwsc',
+      source: 'strategy',
+      created: '10 Aug 2026',
+      workstreams: [
+        {
+          name: 'Service Coverage Expansion',
+          tasks: [
+            { title: 'Map underserved zones in Nchelenge District', owner: 'Thandiwe Mwansa', due: '22 Aug 2026', status: 'done'        },
+            { title: 'Cost network extension options',              owner: 'Thandiwe Mwansa', due: '29 Aug 2026', status: 'in-progress' },
+            { title: 'Board approval for capital allocation',       owner: 'Elijah Nkonde',   due: '12 Sep 2026', status: 'todo'        }
+          ]
+        },
+        {
+          name: 'Revenue Assurance',
+          tasks: [
+            { title: 'Audit metered vs billed volumes',    owner: 'Nomvula Khumalo', due: '25 Aug 2026', status: 'in-progress' },
+            { title: 'Design non-revenue-water dashboard', owner: 'Nomvula Khumalo', due: '5 Sep 2026',  status: 'todo'        }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'wp-002',
+      title: 'Copperbelt Energy — Culture Action Plan',
+      clientId: 'cec',
+      source: 'upload',
+      created: '6 Aug 2026',
+      workstreams: [
+        {
+          name: 'Communication Improvement',
+          tasks: [
+            { title: 'Launch monthly all-hands forum',       owner: 'Thandiwe Mwansa', due: '1 Sep 2026',  status: 'todo' },
+            { title: 'Roll out feedback channel',            owner: 'Thandiwe Mwansa', due: '15 Sep 2026', status: 'todo' }
+          ]
+        }
+      ]
+    }
+  ],
+
+  /* ──────────────────────────────────────────────────────────
      TEAM MEMBERS
   ────────────────────────────────────────────────────────── */
   team: [
