@@ -1,5 +1,213 @@
-<!-- settings — built in a future session -->
-<div style="padding: 8px 0">
-  <div class="page-title" style="margin-bottom:6px; text-transform:capitalize">settings</div>
-  <div class="page-subtitle">Coming in a future session.</div>
+<!--
+  ============================================================
+  SETTINGS PAGE
+  pages/admin/settings.html
+
+  Current user's profile, preferences, and workspace info.
+  Init: init_settings() — called by router.
+
+  Sections:
+  1. Profile      — name, email, org  (editable, saves to KarisState.user)
+  2. Preferences  — landing page + notification toggles
+  3. Workspace    — org info (read-only for non-admins)
+  ============================================================
+-->
+
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-title">Settings</div>
+    <div class="page-subtitle">Manage your profile, preferences, and workspace</div>
+  </div>
 </div>
+
+<div style="max-width: 640px">
+
+  <!-- ═══════════ PROFILE ═══════════ -->
+  <div class="card mb-5">
+    <div class="card-title">Profile</div>
+
+    <div class="d-flex align-center gap-4 mb-5">
+      <div class="avatar" id="settings-avatar" style="width:56px;height:56px;font-size:var(--text-md)">EN</div>
+      <div class="text-sm text-muted">
+        Your initials appear on activity across the workspace.
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="set-name">Full name</label>
+      <input class="form-input" id="set-name" type="text" autocomplete="off">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="set-email">Email address</label>
+      <input class="form-input" id="set-email" type="email" autocomplete="off">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="set-role">Role</label>
+      <input class="form-input" id="set-role" type="text" disabled
+             style="background:var(--color-cream);color:var(--color-muted)">
+      <div class="text-sm text-muted" style="margin-top:6px">
+        Your role is managed by an organisation administrator.
+      </div>
+    </div>
+
+    <div class="d-flex justify-end mt-2">
+      <button class="btn btn-primary" onclick="_saveProfile()">Save changes</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════ PREFERENCES ═══════════ -->
+  <div class="card mb-5">
+    <div class="card-title">Preferences</div>
+
+    <div class="form-field">
+      <label class="form-label" for="set-landing">Default landing page</label>
+      <select class="form-select" id="set-landing" onchange="_savePrefs()">
+        <option value="dashboard">Dashboard</option>
+        <option value="clients">Clients</option>
+      </select>
+      <div class="text-sm text-muted" style="margin-top:6px">
+        Where the workspace opens when you sign in.
+      </div>
+    </div>
+
+    <div style="margin-top:var(--space-4)">
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Report notifications</div>
+          <div class="settings-row-desc">Email me when a report is generated</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="pref-reports" onchange="_savePrefs()">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Team activity</div>
+          <div class="settings-row-desc">Email me when members join or are invited</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="pref-invites" onchange="_savePrefs()">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Weekly digest</div>
+          <div class="settings-row-desc">A weekly summary of engagement activity</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="pref-digest" onchange="_savePrefs()">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════ WORKSPACE ═══════════ -->
+  <div class="card mb-5">
+    <div class="card-title">Workspace</div>
+
+    <div class="form-field">
+      <label class="form-label" for="set-org">Organisation</label>
+      <input class="form-input" id="set-org" type="text" autocomplete="off">
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Plan</div>
+        <div class="settings-row-desc">Your current workspace tier</div>
+      </div>
+      <span class="badge badge-gold-i">Professional</span>
+    </div>
+
+    <div class="d-flex justify-end mt-4">
+      <button class="btn btn-primary" onclick="_saveWorkspace()">Save workspace</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════ SIGN OUT ═══════════ -->
+  <div class="card">
+    <div class="d-flex align-center justify-between">
+      <div>
+        <div class="settings-row-label">Sign out</div>
+        <div class="settings-row-desc">End your session on this device</div>
+      </div>
+      <button class="btn btn-secondary"
+              onclick="showToast('Sign-out available when backend auth is live.')">
+        Sign out
+      </button>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+function init_settings() {
+  const u = KarisState.user;
+  const p = KarisState.preferences || {};
+
+  /* Profile */
+  document.getElementById('settings-avatar').textContent = u.initials || 'EN';
+  document.getElementById('set-name').value  = u.name  || '';
+  document.getElementById('set-email').value = u.email || '';
+  document.getElementById('set-role').value  = u.role  || '';
+  document.getElementById('set-org').value   = u.org   || '';
+
+  /* Preferences */
+  document.getElementById('set-landing').value    = p.landingPage  || 'dashboard';
+  document.getElementById('pref-reports').checked = p.emailReports !== false;
+  document.getElementById('pref-invites').checked = p.emailInvites !== false;
+  document.getElementById('pref-digest').checked  = p.weeklyDigest === true;
+}
+
+async function _saveProfile() {
+  const name  = document.getElementById('set-name').value.trim();
+  const email = document.getElementById('set-email').value.trim();
+
+  if (!name) { showToast('Name cannot be empty.'); return; }
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email.'); return; }
+
+  /* Derive initials from name */
+  const initials = name.split(/\s+/).map(function(w){ return w[0]; })
+                       .join('').substring(0,2).toUpperCase();
+
+  await KarisAPI.updateProfile({ name: name, email: email, initials: initials });
+
+  /* Reflect new initials in this page + shell avatars */
+  document.getElementById('settings-avatar').textContent = initials;
+  const sa = document.getElementById('sidebar-avatar');
+  const ta = document.getElementById('topbar-avatar');
+  if (sa) sa.textContent = initials;
+  if (ta) ta.textContent = initials;
+  const sn = document.getElementById('sidebar-name');
+  if (sn) sn.textContent = name;
+
+  showToast('Profile saved.');
+}
+
+async function _savePrefs() {
+  await KarisAPI.updatePreferences({
+    landingPage:  document.getElementById('set-landing').value,
+    emailReports: document.getElementById('pref-reports').checked,
+    emailInvites: document.getElementById('pref-invites').checked,
+    weeklyDigest: document.getElementById('pref-digest').checked
+  });
+  showToast('Preferences updated.');
+}
+
+async function _saveWorkspace() {
+  const org = document.getElementById('set-org').value.trim();
+  if (!org) { showToast('Organisation name cannot be empty.'); return; }
+  await KarisAPI.updateProfile({ org: org });
+  showToast('Workspace saved.');
+}
+</script>
