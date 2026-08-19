@@ -1,5 +1,375 @@
-<!-- cascade — built in a future session -->
-<div style="padding: 8px 0">
-  <div class="page-title" style="margin-bottom:6px; text-transform:capitalize">cascade</div>
-  <div class="page-subtitle">Coming in a future session.</div>
+<!--
+  ============================================================
+  CASCADE — Workplan decomposition & execution engine
+  pages/tools/cascade.html   (accent: violet #7C5CBF)
+
+  Two entry paths:
+    - Decompose from a Strategy engagement (source: 'strategy')
+    - Upload a standalone workplan          (source: 'upload')
+
+  This session ships:
+    - Workplan list (from KarisState.workplans)
+    - Both entry paths (modals)
+    - Detail view: decomposition tree (workstreams → tasks)
+      with interactive task status + live progress
+
+  Init: init_cascade() — called by router.
+  ============================================================
+-->
+
+<!-- LIST VIEW -->
+<div id="csc-list-view">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Cascade</div>
+      <div class="page-subtitle">Decompose strategy into workstreams, tasks, and owners</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-secondary" onclick="openModal('modal-upload-wp')">
+        ↑ Upload workplan
+      </button>
+      <button class="btn btn-primary" onclick="openModal('modal-decompose-wp')"
+              style="background:var(--color-cascade);border-color:var(--color-cascade)">
+        + Decompose strategy
+      </button>
+    </div>
+  </div>
+
+  <div class="text-sm text-muted mb-4" id="csc-count"></div>
+
+  <div id="csc-container"><!-- rendered --></div>
 </div>
+
+
+<!-- DETAIL VIEW -->
+<div id="csc-detail-view" style="display:none"><!-- rendered by _openWorkplan() --></div>
+
+
+<!-- ═══════════ DECOMPOSE-FROM-STRATEGY MODAL ═══════════ -->
+<div class="modal-backdrop" id="modal-decompose-wp">
+  <div class="modal">
+    <div class="modal-title">Decompose from strategy</div>
+    <div class="text-sm text-muted mb-4">
+      Generate a workplan from a client's Strategy (7Cs) engagement. Workstreams
+      are seeded from the strategic outputs, ready to break into tasks.
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="dc-client">Client (with an active Strategy engagement) *</label>
+      <select class="form-select" id="dc-client">
+        <option value="">Select client…</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="dc-title">Workplan title *</label>
+      <input class="form-input" id="dc-title" type="text"
+             placeholder="e.g. Strategy Execution Plan" autocomplete="off">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-decompose-wp')">Cancel</button>
+      <button class="btn btn-primary" onclick="_createWorkplan('strategy')"
+              style="background:var(--color-cascade);border-color:var(--color-cascade)">
+        Create workplan
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ UPLOAD-STANDALONE MODAL ═══════════ -->
+<div class="modal-backdrop" id="modal-upload-wp">
+  <div class="modal">
+    <div class="modal-title">Upload a workplan</div>
+    <div class="text-sm text-muted mb-4">
+      Import an existing workplan to manage execution in Cascade — no Strategy
+      engagement required.
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="up-title">Workplan title *</label>
+      <input class="form-input" id="up-title" type="text"
+             placeholder="e.g. Culture Action Plan" autocomplete="off">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="up-client">Client</label>
+      <select class="form-select" id="up-client">
+        <option value="">No client (internal)</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Workplan file</label>
+      <div style="border:1px dashed var(--color-border);border-radius:var(--radius-md);
+                  padding:var(--space-5);text-align:center;color:var(--color-muted)">
+        <div style="font-size:24px;margin-bottom:6px">↑</div>
+        <div class="text-sm">Drag a file here, or click to browse</div>
+        <div class="text-sm" style="margin-top:4px;opacity:0.7">
+          File parsing available when backend is live
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-upload-wp')">Cancel</button>
+      <button class="btn btn-primary" onclick="_createWorkplan('upload')">Create workplan</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function init_cascade() {
+  _showWorkplanList();
+  _populateCascadeClientDropdowns();
+  _renderWorkplans();
+}
+
+function _showWorkplanList() {
+  document.getElementById('csc-list-view').style.display = '';
+  document.getElementById('csc-detail-view').style.display = 'none';
+}
+
+function _populateCascadeClientDropdowns() {
+  /* Decompose dropdown: only clients with a Strategy engagement started */
+  const dc = document.getElementById('dc-client');
+  const up = document.getElementById('up-client');
+  KarisState.clients.forEach(function(c) {
+    if (dc) {
+      const strat = c.instruments && c.instruments.strategy;
+      if (strat && strat.status && strat.status !== 'not-started') {
+        const o = document.createElement('option');
+        o.value = c.id; o.textContent = c.name;
+        dc.appendChild(o);
+      }
+    }
+    if (up) {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.name;
+      up.appendChild(o);
+    }
+  });
+}
+
+/* Progress across all tasks in a workplan */
+function _wpProgress(wp) {
+  let total = 0, done = 0;
+  (wp.workstreams || []).forEach(function(ws) {
+    (ws.tasks || []).forEach(function(t) {
+      total++;
+      if (t.status === 'done') done++;
+    });
+  });
+  return { total: total, done: done, pct: total ? Math.round(done / total * 100) : 0 };
+}
+
+function _sourceBadge(source) {
+  return source === 'strategy'
+    ? '<span class="badge badge-strategy flex-shrink-0">From Strategy</span>'
+    : '<span class="badge badge-muted flex-shrink-0">Uploaded</span>';
+}
+
+function _renderWorkplans() {
+  const container = document.getElementById('csc-container');
+  const countEl   = document.getElementById('csc-count');
+  if (!container) return;
+
+  const plans = KarisState.workplans || [];
+  if (countEl) {
+    countEl.textContent = plans.length + (plans.length === 1 ? ' workplan' : ' workplans');
+  }
+
+  if (!plans.length) {
+    container.innerHTML = `
+      <div class="table-wrap">
+        <div class="empty-state">
+          <div class="empty-state-icon">☰</div>
+          <div class="empty-state-title">No workplans yet</div>
+          <div class="empty-state-sub">
+            Decompose a Strategy engagement, or upload an existing workplan to
+            start tracking execution.
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const cards = plans.map(function(wp) {
+    const client = wp.clientId ? KarisState.getClient(wp.clientId) : null;
+    const clientName = client ? client.name : 'Internal';
+    const p = _wpProgress(wp);
+    const wsCount = (wp.workstreams || []).length;
+
+    return `
+      <div class="card card-hover mb-3" style="cursor:pointer;border-left:3px solid var(--color-cascade)"
+           onclick="_openWorkplan('${wp.id}')">
+        <div class="d-flex align-center justify-between" style="flex-wrap:wrap;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:var(--weight-semibold);color:var(--color-navy)" class="truncate">
+              ${wp.title}
+            </div>
+            <div class="text-sm text-muted truncate">
+              ${clientName} · ${wsCount} workstream${wsCount===1?'':'s'} · ${p.done}/${p.total} tasks done
+            </div>
+          </div>
+          ${_sourceBadge(wp.source)}
+        </div>
+        <div style="margin-top:12px">
+          <div style="height:6px;background:var(--color-cascade-light);border-radius:var(--radius-full);overflow:hidden">
+            <div style="height:100%;width:${p.pct}%;background:var(--color-cascade)"></div>
+          </div>
+          <div class="text-sm text-muted" style="margin-top:6px">${p.pct}% complete</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = cards;
+}
+
+async function _createWorkplan(source) {
+  const titleEl  = source === 'strategy' ? 'dc-title'  : 'up-title';
+  const clientEl = source === 'strategy' ? 'dc-client' : 'up-client';
+  const modalId  = source === 'strategy' ? 'modal-decompose-wp' : 'modal-upload-wp';
+
+  const title = (document.getElementById(titleEl).value || '').trim();
+  if (!title) { showToast('Workplan title is required.'); return; }
+
+  const clientId = document.getElementById(clientEl).value || null;
+  if (source === 'strategy' && !clientId) {
+    showToast('Select a client with a Strategy engagement.'); return;
+  }
+
+  /* Seed a starter workstream so the new plan isn't empty */
+  const seed = source === 'strategy'
+    ? [{ name: 'Strategic Priority 1', tasks: [
+        { title: 'Define first action', owner: KarisState.user.name, due: 'TBC', status: 'todo' }
+      ]}]
+    : [{ name: 'Workstream 1', tasks: [] }];
+
+  await KarisAPI.createWorkplan({ title: title, clientId: clientId, source: source, workstreams: seed });
+
+  closeModal(modalId);
+  document.getElementById(titleEl).value = '';
+  _renderWorkplans();
+  showToast('Workplan created.');
+}
+
+/* ── DETAIL VIEW: decomposition tree ── */
+function _openWorkplan(id) {
+  const wp = KarisState.workplans.find(function(x){ return x.id === id; });
+  if (!wp) return;
+  const client = wp.clientId ? KarisState.getClient(wp.clientId) : null;
+  const clientName = client ? client.name : 'Internal';
+  const p = _wpProgress(wp);
+
+  const streams = (wp.workstreams || []).map(function(ws, wsIdx) {
+    const tasks = (ws.tasks || []).map(function(t, tIdx) {
+      return _taskRow(wp.id, wsIdx, tIdx, t);
+    }).join('');
+
+    const emptyTasks = !(ws.tasks && ws.tasks.length)
+      ? '<div class="text-sm text-muted" style="padding:8px 0 4px 0">No tasks yet</div>' : '';
+
+    return `
+      <div class="card mb-4">
+        <div class="d-flex align-center gap-2 mb-3">
+          <div style="width:6px;height:20px;border-radius:3px;background:var(--color-cascade);flex-shrink:0"></div>
+          <div style="font-weight:var(--weight-semibold);color:var(--color-navy)">${ws.name}</div>
+        </div>
+        <div>${tasks}${emptyTasks}</div>
+      </div>`;
+  }).join('');
+
+  const detail = document.getElementById('csc-detail-view');
+  detail.innerHTML = `
+    <div class="d-flex align-center gap-2 mb-4">
+      <button class="btn btn-ghost btn-sm" onclick="_showWorkplanList()">← All workplans</button>
+    </div>
+
+    <div class="card mb-5" style="border-left:3px solid var(--color-cascade)">
+      <div class="d-flex align-center justify-between" style="flex-wrap:wrap;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div class="page-title" style="margin-bottom:4px">${wp.title}</div>
+          <div class="text-sm text-muted">${clientName} · created ${wp.created}</div>
+        </div>
+        ${_sourceBadge(wp.source)}
+      </div>
+      <div style="margin-top:14px">
+        <div style="height:8px;background:var(--color-cascade-light);border-radius:var(--radius-full);overflow:hidden">
+          <div id="csc-progress-bar" style="height:100%;width:${p.pct}%;background:var(--color-cascade);transition:width var(--transition-fast)"></div>
+        </div>
+        <div class="text-sm text-muted" style="margin-top:6px" id="csc-progress-label">
+          ${p.done} of ${p.total} tasks complete · ${p.pct}%
+        </div>
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-bottom:var(--space-3)">Workstreams</div>
+    <div id="csc-streams">${streams}</div>
+  `;
+
+  document.getElementById('csc-list-view').style.display = 'none';
+  detail.style.display = '';
+  window.scrollTo(0, 0);
+}
+
+function _taskRow(wpId, wsIdx, tIdx, t) {
+  const statusMap = {
+    'todo':        ['badge-muted',   'To do'],
+    'in-progress': ['badge-warning', 'In progress'],
+    'done':        ['badge-success', 'Done']
+  };
+  const s = statusMap[t.status] || statusMap['todo'];
+  const doneStyle = t.status === 'done'
+    ? 'text-decoration:line-through;opacity:0.6' : '';
+
+  return `
+    <div class="d-flex align-center gap-3" style="padding:10px 0;border-bottom:1px solid var(--color-border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:var(--weight-medium);${doneStyle}" class="truncate">${t.title}</div>
+        <div class="text-sm text-muted truncate">${t.owner} · due ${t.due}</div>
+      </div>
+      <select class="form-select flex-shrink-0" style="width:auto;min-width:130px"
+              onchange="_setTaskStatus('${wpId}',${wsIdx},${tIdx},this.value)">
+        <option value="todo"        ${t.status==='todo'?'selected':''}>To do</option>
+        <option value="in-progress" ${t.status==='in-progress'?'selected':''}>In progress</option>
+        <option value="done"        ${t.status==='done'?'selected':''}>Done</option>
+      </select>
+    </div>`;
+}
+
+async function _setTaskStatus(wpId, wsIdx, tIdx, status) {
+  await KarisAPI.updateTaskStatus(wpId, wsIdx, tIdx, status);
+
+  /* Re-render the detail view to reflect str/progress changes */
+  const wp = KarisState.workplans.find(function(x){ return x.id === wpId; });
+  if (!wp) return;
+  const p = _wpProgress(wp);
+
+  const bar = document.getElementById('csc-progress-bar');
+  const lbl = document.getElementById('csc-progress-label');
+  if (bar) bar.style.width = p.pct + '%';
+  if (lbl) lbl.textContent = p.done + ' of ' + p.total + ' tasks complete · ' + p.pct + '%';
+
+  /* Re-render just the streams so the strike-through updates */
+  const streamsHost = document.getElementById('csc-streams');
+  if (streamsHost) {
+    streamsHost.innerHTML = (wp.workstreams || []).map(function(ws, wi) {
+      const tasks = (ws.tasks || []).map(function(t, ti){ return _taskRow(wp.id, wi, ti, t); }).join('');
+      const emptyTasks = !(ws.tasks && ws.tasks.length)
+        ? '<div class="text-sm text-muted" style="padding:8px 0 4px 0">No tasks yet</div>' : '';
+      return `
+        <div class="card mb-4">
+          <div class="d-flex align-center gap-2 mb-3">
+            <div style="width:6px;height:20px;border-radius:3px;background:var(--color-cascade);flex-shrink:0"></div>
+            <div style="font-weight:var(--weight-semibold);color:var(--color-navy)">${ws.name}</div>
+          </div>
+          <div>${tasks}${emptyTasks}</div>
+        </div>`;
+    }).join('');
+  }
+}
+</script>
