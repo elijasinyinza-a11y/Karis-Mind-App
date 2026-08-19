@@ -827,3 +827,28 @@
 .score-band {
   margin-top: var(--space-3);
 }
+
+
+/* ──────────────────────────────────────────────────────────
+   AVATAR (reusable initials badge)
+   Used in team page, member lists, activity feeds.
+   ────────────────────────────────────────────────────────── */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-white);
+  flex-shrink: 0;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-xs);
+}
