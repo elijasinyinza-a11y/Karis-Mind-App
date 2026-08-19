@@ -265,8 +265,10 @@ const KarisState = {
      TEAM MEMBERS
   ────────────────────────────────────────────────────────── */
   team: [
-    { initials: 'EN', name: 'Elijah Nkonde',    role: 'Org Admin',   status: 'active', isCurrentUser: true  },
-    { initials: 'TM', name: 'Thandiwe Mwansa',  role: 'Practitioner', status: 'active', isCurrentUser: false }
+    { initials: 'EN', name: 'Elijah Nkonde',    email: 'elijah@karistech.co.zm',    role: 'Org Admin',    status: 'active',  isCurrentUser: true,  joined: '1 Jul 2026'  },
+    { initials: 'TM', name: 'Thandiwe Mwansa',  email: 'thandiwe@karistech.co.zm',  role: 'Practitioner', status: 'active',  isCurrentUser: false, joined: '12 Jul 2026' },
+    { initials: 'NK', name: 'Nomvula Khumalo',  email: 'nomvula@karistech.co.zm',   role: 'Practitioner', status: 'active',  isCurrentUser: false, joined: '20 Jul 2026' },
+    { initials: 'OA', name: 'Oluwaseun Adeyemi', email: 'seun@karistech.co.zm',     role: 'Viewer',       status: 'pending', isCurrentUser: false, joined: '—'          }
   ],
 
   /* ──────────────────────────────────────────────────────────
