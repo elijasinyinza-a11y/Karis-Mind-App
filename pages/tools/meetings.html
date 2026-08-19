@@ -1,5 +1,267 @@
-<!-- meetings — built in a future session -->
-<div style="padding: 8px 0">
-  <div class="page-title" style="margin-bottom:6px; text-transform:capitalize">meetings</div>
-  <div class="page-subtitle">Coming in a future session.</div>
+<!--
+  ============================================================
+  MEETING TOOLKIT
+  pages/tools/meetings.html
+
+  Five-component meeting workflow:
+    Meeting Planner · Agenda Builder · Live Capture ·
+    Minutes & Notes · Action Points
+
+  This session ships:
+    - Meeting list (from KarisState.meetings)
+    - Plan-new-meeting flow (modal → createMeeting)
+    - Meeting detail view with the five components stubbed
+
+  Init: init_meetings() — called by router.
+  ============================================================
+-->
+
+<!-- LIST VIEW -->
+<div id="mtg-list-view">
+
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Meeting Toolkit</div>
+      <div class="page-subtitle">Plan, run, and capture your client meetings</div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-new-meeting')">
+      + Plan a meeting
+    </button>
+  </div>
+
+  <!-- Filter + count -->
+  <div class="d-flex align-center gap-3 mb-4" style="flex-wrap:wrap">
+    <select class="form-select" id="mtg-filter" style="width:auto;min-width:150px"
+            onchange="_renderMeetings()">
+      <option value="all">All meetings</option>
+      <option value="planned">Planned</option>
+      <option value="complete">Complete</option>
+    </select>
+    <div class="text-sm text-muted ml-auto" id="mtg-count"></div>
+  </div>
+
+  <div id="mtg-container"><!-- rendered --></div>
 </div>
+
+
+<!-- DETAIL VIEW (hidden until a meeting is opened) -->
+<div id="mtg-detail-view" style="display:none">
+  <!-- rendered by _openMeeting() -->
+</div>
+
+
+<!-- ═══════════ PLAN-NEW-MEETING MODAL ═══════════ -->
+<div class="modal-backdrop" id="modal-new-meeting">
+  <div class="modal">
+    <div class="modal-title">Plan a meeting</div>
+
+    <div class="form-field">
+      <label class="form-label" for="nm-title">Meeting title *</label>
+      <input class="form-input" id="nm-title" type="text"
+             placeholder="e.g. OCAM feedback session" autocomplete="off">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="nm-client">Client</label>
+      <select class="form-select" id="nm-client">
+        <option value="">No client (internal)</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="nm-instrument">Related instrument</label>
+      <select class="form-select" id="nm-instrument">
+        <option value="">None</option>
+        <option value="ocam">OCAM™</option>
+        <option value="gold-i">GOLD™</option>
+        <option value="strategy">Strategy</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="nm-date">Date</label>
+      <input class="form-input" id="nm-date" type="text"
+             placeholder="e.g. 25 Aug 2026" autocomplete="off">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-meeting')">Cancel</button>
+      <button class="btn btn-primary" onclick="_createMeeting()">Create meeting</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ── Instrument display helpers ── */
+function _mtgInstrumentBadge(instr) {
+  if (!instr) return '';
+  const map = {
+    'ocam':     ['badge-ocam', 'OCAM'],
+    'gold-i':   ['badge-gold-i', 'GOLD'],
+    'gold':     ['badge-gold-i', 'GOLD'],
+    'strategy': ['badge-strategy', 'Strategy']
+  };
+  const m = map[instr];
+  if (!m) return '';
+  return '<span class="badge ' + m[0] + ' flex-shrink-0">' + m[1] + '</span>';
+}
+
+function init_meetings() {
+  _showMeetingList();
+  _populateClientDropdown();
+  _renderMeetings();
+}
+
+function _showMeetingList() {
+  document.getElementById('mtg-list-view').style.display = '';
+  document.getElementById('mtg-detail-view').style.display = 'none';
+}
+
+function _populateClientDropdown() {
+  const sel = document.getElementById('nm-client');
+  if (!sel) return;
+  /* keep the first (No client) option, append clients */
+  KarisState.clients.forEach(function(c) {
+    const o = document.createElement('option');
+    o.value = c.id; o.textContent = c.name;
+    sel.appendChild(o);
+  });
+}
+
+function _renderMeetings() {
+  const container = document.getElementById('mtg-container');
+  const countEl   = document.getElementById('mtg-count');
+  const filter    = document.getElementById('mtg-filter')?.value || 'all';
+  if (!container) return;
+
+  let meetings = KarisState.meetings.slice();
+  if (filter !== 'all') {
+    meetings = meetings.filter(function(m){ return m.status === filter; });
+  }
+
+  if (countEl) {
+    countEl.textContent = meetings.length + (meetings.length === 1 ? ' meeting' : ' meetings');
+  }
+
+  if (!meetings.length) {
+    container.innerHTML = `
+      <div class="table-wrap">
+        <div class="empty-state">
+          <div class="empty-state-icon">🗓</div>
+          <div class="empty-state-title">No meetings ${filter !== 'all' ? '('+filter+')' : 'yet'}</div>
+          <div class="empty-state-sub">Plan a meeting to start building an agenda and capturing notes.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const rows = meetings.map(function(m) {
+    const client = m.clientId ? KarisState.getClient(m.clientId) : null;
+    const clientName = client ? client.name : 'Internal';
+    const statusBadge = m.status === 'complete'
+      ? '<span class="badge badge-success flex-shrink-0">Complete</span>'
+      : '<span class="badge badge-warning flex-shrink-0">Planned</span>';
+
+    return `
+      <div class="table-row" style="cursor:pointer" onclick="_openMeeting('${m.id}')">
+        <div class="text-sm text-muted flex-shrink-0" style="min-width:90px">${m.date}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:var(--weight-medium)" class="truncate">${m.title}</div>
+          <div class="text-sm text-muted truncate">${clientName}</div>
+        </div>
+        ${_mtgInstrumentBadge(m.instrument)}
+        ${statusBadge}
+        <div class="text-muted flex-shrink-0" style="font-size:18px">›</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = '<div class="table-wrap">' + rows + '</div>';
+}
+
+async function _createMeeting() {
+  const title = (document.getElementById('nm-title').value || '').trim();
+  if (!title) { showToast('Meeting title is required.'); return; }
+
+  const payload = {
+    title:      title,
+    clientId:   document.getElementById('nm-client').value || null,
+    instrument: document.getElementById('nm-instrument').value || '',
+    date:       (document.getElementById('nm-date').value || '').trim() || 'TBC'
+  };
+
+  await KarisAPI.createMeeting(payload);
+
+  closeModal('modal-new-meeting');
+  document.getElementById('nm-title').value = '';
+  document.getElementById('nm-date').value = '';
+  document.getElementById('nm-client').value = '';
+  document.getElementById('nm-instrument').value = '';
+  _renderMeetings();
+  showToast('Meeting created.');
+}
+
+/* ── DETAIL VIEW ── */
+function _openMeeting(id) {
+  const m = KarisState.meetings.find(function(x){ return x.id === id; });
+  if (!m) return;
+  const client = m.clientId ? KarisState.getClient(m.clientId) : null;
+  const clientName = client ? client.name : 'Internal';
+
+  const components = [
+    ['Meeting Planner', 'Set objectives, attendees, and logistics.', '◷'],
+    ['Agenda Builder',  'Structure discussion items with time allocations.', '☰'],
+    ['Live Capture',    'Take structured notes in real time during the meeting.', '✎'],
+    ['Minutes & Notes', 'Generate formatted minutes from captured notes.', '▤'],
+    ['Action Points',   'Track decisions and assigned follow-up actions.', '✓']
+  ];
+
+  const cards = components.map(function(c) {
+    return `
+      <div class="card card-hover" style="cursor:pointer"
+           onclick="showToast('${c[0]} — available in an upcoming session.')">
+        <div class="d-flex align-center gap-3">
+          <div class="flex-shrink-0" style="width:38px;height:38px;border-radius:var(--radius-md);
+               background:var(--color-cream);display:flex;align-items:center;
+               justify-content:center;font-size:18px">${c[2]}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:var(--weight-semibold);color:var(--color-navy)">${c[0]}</div>
+            <div class="text-sm text-muted">${c[1]}</div>
+          </div>
+          <div class="text-muted flex-shrink-0" style="font-size:18px">›</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const detail = document.getElementById('mtg-detail-view');
+  detail.innerHTML = `
+    <div class="d-flex align-center gap-2 mb-4">
+      <button class="btn btn-ghost btn-sm" onclick="_showMeetingList()">← All meetings</button>
+    </div>
+
+    <div class="card mb-5" style="border-left:3px solid var(--color-ocam)">
+      <div class="d-flex align-center justify-between" style="flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="page-title" style="margin-bottom:4px">${m.title}</div>
+          <div class="text-sm text-muted">
+            ${m.date} · ${clientName}
+          </div>
+        </div>
+        <div class="d-flex align-center gap-2">
+          ${_mtgInstrumentBadge(m.instrument)}
+          ${m.status === 'complete'
+            ? '<span class="badge badge-success">Complete</span>'
+            : '<span class="badge badge-warning">Planned</span>'}
+        </div>
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-bottom:var(--space-3)">Toolkit</div>
+    <div class="d-flex flex-col gap-3">${cards}</div>
+  `;
+
+  document.getElementById('mtg-list-view').style.display = 'none';
+  detail.style.display = '';
+  window.scrollTo(0, 0);
+}
+</script>
