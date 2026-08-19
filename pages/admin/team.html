@@ -1,5 +1,166 @@
-<!-- team — built in a future session -->
-<div style="padding: 8px 0">
-  <div class="page-title" style="margin-bottom:6px; text-transform:capitalize">team</div>
-  <div class="page-subtitle">Coming in a future session.</div>
+<!--
+  ============================================================
+  TEAM PAGE
+  pages/admin/team.html
+
+  Practitioners in the organisation.
+  Init: init_team() — called by router.
+
+  Sections:
+  1. Page header  — title + invite button
+  2. Team table   — member rows from KarisState.team
+  3. Invite modal — email + role, calls KarisAPI.inviteMember()
+  ============================================================
+-->
+
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-title">Team</div>
+    <div class="page-subtitle">Practitioners with access to this workspace</div>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('modal-invite')">
+    + Invite member
+  </button>
 </div>
+
+<!-- Member count -->
+<div class="text-sm text-muted mb-4" id="team-count"></div>
+
+<!-- Team table -->
+<div id="team-container">
+  <!-- Rendered by init_team() -->
+</div>
+
+
+<!-- ═══════════════ INVITE MODAL ═══════════════ -->
+<div class="modal-backdrop" id="modal-invite">
+  <div class="modal">
+
+    <div class="modal-title">Invite a team member</div>
+
+    <div class="form-field">
+      <label class="form-label" for="inv-email">Email address *</label>
+      <input class="form-input" id="inv-email" type="email"
+             placeholder="colleague@example.com" autocomplete="off">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="inv-role">Role</label>
+      <select class="form-select" id="inv-role">
+        <option value="Practitioner">Practitioner — run instruments, manage clients</option>
+        <option value="Org Admin">Org Admin — full access, manage team & settings</option>
+        <option value="Viewer">Viewer — read-only access to reports</option>
+      </select>
+    </div>
+
+    <div class="text-sm text-muted mb-2">
+      An invitation email will be sent. The member joins once they accept.
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-invite')">
+        Cancel
+      </button>
+      <button class="btn btn-primary" onclick="_sendInvite()">
+        Send invitation
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+function init_team() {
+  _renderTeam();
+}
+
+function _roleBadgeClass(role) {
+  if (role === 'Org Admin')  return 'badge-gold-i';
+  if (role === 'Viewer')     return 'badge-muted';
+  return 'badge-ocam';                    /* Practitioner */
+}
+
+function _renderTeam() {
+  const container = document.getElementById('team-container');
+  const countEl   = document.getElementById('team-count');
+  if (!container) return;
+
+  const team = KarisState.team || [];
+
+  if (countEl) {
+    const active  = team.filter(function(m){ return m.status === 'active'; }).length;
+    const pending = team.filter(function(m){ return m.status === 'pending'; }).length;
+    countEl.textContent = active + (active === 1 ? ' active member' : ' active members')
+                        + (pending ? ' · ' + pending + ' pending' : '');
+  }
+
+  const rows = team.map(function(m) {
+    const youTag = m.isCurrentUser
+      ? '<span class="text-sm text-muted" style="margin-left:6px">(you)</span>' : '';
+
+    const statusTag = m.status === 'pending'
+      ? '<span class="badge badge-muted flex-shrink-0">Pending</span>'
+      : '';
+
+    /* Current user & pending invites get no remove button */
+    const removeBtn = (m.isCurrentUser)
+      ? ''
+      : `<button class="btn btn-ghost btn-sm flex-shrink-0"
+                 onclick="_removeMember('${m.name.replace(/'/g,"\\'")}')">
+           Remove
+         </button>`;
+
+    return `
+      <div class="table-row">
+        <div class="avatar avatar-sm flex-shrink-0">${m.initials}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:var(--weight-medium)" class="truncate">
+            ${m.name}${youTag}
+          </div>
+          <div class="text-sm text-muted truncate">${m.email || ''}</div>
+        </div>
+        <span class="badge ${_roleBadgeClass(m.role)} flex-shrink-0">${m.role}</span>
+        ${statusTag}
+        ${removeBtn}
+      </div>`;
+  }).join('');
+
+  container.innerHTML = '<div class="table-wrap">' + rows + '</div>';
+}
+
+async function _sendInvite() {
+  const email = (document.getElementById('inv-email')?.value || '').trim();
+  const role  = document.getElementById('inv-role')?.value || 'Practitioner';
+
+  if (!email || !email.includes('@')) {
+    showToast('Please enter a valid email address.');
+    return;
+  }
+
+  await KarisAPI.inviteMember(email, role);
+
+  /* Add a pending row to local state so the UI reflects it */
+  const initials = email.substring(0, 2).toUpperCase();
+  KarisState.team.push({
+    initials: initials,
+    name:     email.split('@')[0],
+    email:    email,
+    role:     role,
+    status:   'pending',
+    isCurrentUser: false,
+    joined:   '—'
+  });
+
+  closeModal('modal-invite');
+  document.getElementById('inv-email').value = '';
+  _renderTeam();
+  showToast('Invitation sent to ' + email);
+}
+
+function _removeMember(name) {
+  KarisState.team = KarisState.team.filter(function(m){ return m.name !== name; });
+  _renderTeam();
+  showToast(name + ' removed from the team.');
+}
+</script>
