@@ -356,6 +356,28 @@ const KarisAPI = {
     */
     console.log('[API] inviteMember →', email, role);
     return { status: 'invited', email, role };
+  },
+
+  /* ──────────────────────────────────────────────────────────
+     SETTINGS / PROFILE
+  ────────────────────────────────────────────────────────── */
+
+  async updateProfile(fields) {
+    /*
+      TODO (live): UPDATE users SET ... WHERE id = auth.uid()
+    */
+    console.log('[API] updateProfile →', fields);
+    Object.assign(KarisState.user, fields);
+    return { status: 'saved', user: KarisState.user };
+  },
+
+  async updatePreferences(prefs) {
+    /*
+      TODO (live): UPDATE user_preferences SET ... WHERE user_id = auth.uid()
+    */
+    console.log('[API] updatePreferences →', prefs);
+    KarisState.preferences = Object.assign(KarisState.preferences || {}, prefs);
+    return { status: 'saved', preferences: KarisState.preferences };
   }
 
 };

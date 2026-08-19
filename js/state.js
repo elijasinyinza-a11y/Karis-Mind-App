@@ -31,6 +31,18 @@ const KarisState = {
   },
 
   /* ──────────────────────────────────────────────────────────
+     USER PREFERENCES
+     Workspace-level settings for the current user.
+     Replace with Supabase user_preferences row when backend is live.
+  ────────────────────────────────────────────────────────── */
+  preferences: {
+    landingPage:      'dashboard',   /* dashboard | clients */
+    emailReports:     true,          /* email me when a report is generated */
+    emailInvites:     true,          /* email me team activity */
+    weeklyDigest:     false          /* weekly summary of engagement activity */
+  },
+
+  /* ──────────────────────────────────────────────────────────
      NAVIGATION STATE
      Tracks where the practitioner currently is.
      Updated by KarisRouter on every navigation.
